@@ -1,4 +1,4 @@
-package com.kamiruku.pngoptimiser
+package com.kamiruku.pngoptimiser.comparisonslider
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -27,6 +27,7 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
         this.seekBarRef = WeakReference(seekBar)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun doInBackground(vararg args: T): ClipDrawable? {
         Looper.myLooper()?.let { Looper.prepare() }
         try {
@@ -45,7 +46,7 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
                 theBitmap = tmpBitmap
 
             val bitmapDrawable = BitmapDrawable(context.resources, theBitmap)
-            return ClipDrawable(bitmapDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+            return ClipDrawable(bitmapDrawable, Gravity.START, ClipDrawable.HORIZONTAL)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -69,6 +70,7 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
         return null
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onPostExecute(clipDrawable: ClipDrawable?) {
         if (imageRef.get() != null) {
             if (clipDrawable != null) {

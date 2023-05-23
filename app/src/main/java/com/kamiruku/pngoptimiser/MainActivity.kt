@@ -10,7 +10,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.AppCompatDelegate.NightMode
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.constraintlayout.widget.ConstraintSet
+import com.kamiruku.pngoptimiser.comparisonslider.ComparisonSlider
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -24,12 +29,15 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
+        //Night mode
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+
         val scale = applicationContext.resources.displayMetrics.density
         val browseImages: Button = Button(applicationContext)
         //150 dp width, 150 dp height
         browseImages.layoutParams = ViewGroup.LayoutParams(
             150.toPixels(scale),
-            20.toPixels(scale)
+            ConstraintSet.WRAP_CONTENT
         )
         browseImages.id = View.generateViewId()
         binding.constraintLayout.addView(browseImages)
@@ -46,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         set.connect(browseImages.id, ConstraintSet.END,
             binding.constraintLayout.id, ConstraintSet.END)
 
-        set.setVerticalBias(browseImages.id, 80f)
+        set.setVerticalBias(browseImages.id, 0.85f)
         set.applyTo(binding.constraintLayout)
 
         //Curved Corners
@@ -67,6 +75,28 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             getResult.launch(intent)
         }
+
+        val comparisonSlider: ComparisonSlider = ComparisonSlider(applicationContext)
+        comparisonSlider.layoutParams = ViewGroup.LayoutParams(
+            400.toPixels(scale),
+            400.toPixels(scale)
+        )
+        comparisonSlider.id = View.generateViewId()
+        binding.constraintLayout.addView(comparisonSlider)
+
+        set.clone(binding.constraintLayout)
+        set.connect(comparisonSlider.id, ConstraintSet.TOP,
+            binding.constraintLayout.id, ConstraintSet.TOP)
+        set.connect(comparisonSlider.id, ConstraintSet.BOTTOM,
+            binding.constraintLayout.id, ConstraintSet.BOTTOM)
+        set.connect(comparisonSlider.id, ConstraintSet.START,
+            binding.constraintLayout.id, ConstraintSet.START)
+        set.connect(comparisonSlider.id, ConstraintSet.END,
+            binding.constraintLayout.id, ConstraintSet.END)
+        set.applyTo(binding.constraintLayout)
+
+        comparisonSlider.setBeforeImage(
+            getDrawable(this, R.drawable.ic_launcher_background))
     }
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {

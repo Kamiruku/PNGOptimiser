@@ -1,14 +1,21 @@
-package com.kamiruku.pngoptimiser
+package com.kamiruku.pngoptimiser.comparisonslider
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.widget.RelativeLayout
+import com.kamiruku.pngoptimiser.R
+import com.kamiruku.pngoptimiser.databinding.SliderLayoutBinding
+import com.kamiruku.pngoptimiser.loadImage
+import com.kamiruku.pngoptimiser.stayVisibleOrGone
 
 /**
  * Created by Jemo on 12/5/16.
  */
 
-class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageLoaded{
+class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageLoaded {
+    private lateinit var binding: SliderLayoutBinding
 
     constructor(context: Context): super(context)
 
@@ -30,18 +37,21 @@ class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageL
 
     init {
         LayoutInflater.from(context).inflate(R.layout.slider_layout, this)
+        binding = SliderLayoutBinding.inflate(
+            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        )
     }
 
     /**
      * set original image
      */
-    fun setBeforeImage(imageUri: String): BeforeAfterSlider {
-        before_image_view_id.loadImage(imageUri)
+    fun setBeforeImage(imageUri: String): ComparisonSlider {
+        binding.beforeImageViewId.loadImage(imageUri)
         return this
     }
 
-    fun setBeforeImage(imgDrawable: Drawable?): BeforeAfterSlider {
-        before_image_view_id.loadImage(imgDrawable)
+    fun setBeforeImage(imgDrawable: Drawable?): ComparisonSlider {
+        binding.beforeImageViewId.loadImage(imgDrawable)
         return this
     }
 
@@ -49,14 +59,23 @@ class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageL
      * set changed image
      */
     fun setAfterImage(imageUri: String) {
-        ClipDrawableProcessorTask<String>(after_image_view_id, seekbar_id, context, this).execute(imageUri)
+        ClipDrawableProcessorTask<String>(
+            binding.afterImageViewId,
+            binding.seekbarId,
+            context,
+            this).
+        execute(imageUri)
     }
 
     /**
      * set changed image
      */
     fun setAfterImage(imageDrawable: Drawable?) {
-        ClipDrawableProcessorTask<Drawable>(after_image_view_id, seekbar_id, context, this).execute(imageDrawable)
+        ClipDrawableProcessorTask<Drawable>(
+            binding.afterImageViewId,
+            binding.seekbarId,
+            context, this).
+        execute(imageDrawable)
     }
 
     /**
@@ -64,7 +83,7 @@ class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageL
      */
     fun setSliderThumb(thumb: Drawable?){
         thumb?.let {
-            seekbar_id.thumb = thumb
+            binding.seekbarId.thumb = thumb
         }
     }
 
@@ -72,7 +91,7 @@ class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageL
      * fired up after second image loading will be finished
      */
     override fun onLoadedFinished(loadedSuccess: Boolean) {
-        seekbar_id.stayVisibleOrGone(loadedSuccess)
+        binding.seekbarId.stayVisibleOrGone(loadedSuccess)
     }
 
 }
