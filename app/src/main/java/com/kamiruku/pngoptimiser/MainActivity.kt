@@ -1,6 +1,5 @@
 package com.kamiruku.pngoptimiser
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -8,16 +7,16 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
-import com.google.android.material.imageview.ShapeableImageView
-import com.google.android.material.shape.CornerFamily
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var selectedImageUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,37 +25,36 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
 
         val scale = applicationContext.resources.displayMetrics.density
-        val imageSelector: ShapeableImageView = ShapeableImageView(applicationContext)
+        val browseImages: Button = Button(applicationContext)
         //150 dp width, 150 dp height
-        imageSelector.layoutParams = ViewGroup.LayoutParams(
+        browseImages.layoutParams = ViewGroup.LayoutParams(
             150.toPixels(scale),
-            150.toPixels(scale)
+            20.toPixels(scale)
         )
-        imageSelector.id = View.generateViewId()
-        binding.constraintLayout.addView(imageSelector)
+        browseImages.id = View.generateViewId()
+        binding.constraintLayout.addView(browseImages)
 
         //Establishes constraints to the spinner
         val set: ConstraintSet = ConstraintSet()
         set.clone(binding.constraintLayout)
-        set.connect(imageSelector.id, ConstraintSet.TOP,
+        set.connect(browseImages.id, ConstraintSet.TOP,
             binding.constraintLayout.id, ConstraintSet.TOP)
-        set.connect(imageSelector.id, ConstraintSet.BOTTOM,
+        set.connect(browseImages.id, ConstraintSet.BOTTOM,
             binding.constraintLayout.id, ConstraintSet.BOTTOM)
-        set.connect(imageSelector.id, ConstraintSet.START,
+        set.connect(browseImages.id, ConstraintSet.START,
             binding.constraintLayout.id, ConstraintSet.START)
-        set.connect(imageSelector.id, ConstraintSet.END,
+        set.connect(browseImages.id, ConstraintSet.END,
             binding.constraintLayout.id, ConstraintSet.END)
+
+        set.setVerticalBias(browseImages.id, 80f)
         set.applyTo(binding.constraintLayout)
 
-        imageSelector.setBackgroundColor(Color.parseColor("#80512DA8"))
-        //Curved corners
-        imageSelector.shapeAppearanceModel =
-            imageSelector.shapeAppearanceModel
-                .toBuilder()
-                .setAllCorners(CornerFamily.ROUNDED, 50f)
-                .build()
+        //Curved Corners
+        browseImages.setBackgroundResource(R.drawable.button_background)
+        browseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
+        browseImages.text = getString(R.string.browseImages)
 
-        imageSelector.setOnClickListener {
+        browseImages.setOnClickListener {
             val intent: Intent
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
                 //Android 13
@@ -74,9 +72,9 @@ class MainActivity : AppCompatActivity() {
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         //Receiver for image picker
         if (it.resultCode == 1) {
-            val selectedImageUri: Uri? = it.data?.data
-            if (selectedImageUri != null) {
-                //TODO display selected image
+            val imageUri: Uri? = it.data?.data
+            if (imageUri != null) {
+                selectedImageUri = imageUri
             }
         }
     }
