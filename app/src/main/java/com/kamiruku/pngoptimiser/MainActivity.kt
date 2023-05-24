@@ -10,12 +10,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.app.AppCompatDelegate.NightMode
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.constraintlayout.widget.ConstraintSet
-import com.kamiruku.pngoptimiser.comparisonslider.ComparisonSlider
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -30,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
 
         //Night mode
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 
         val scale = applicationContext.resources.displayMetrics.density
         val browseImages: Button = Button(applicationContext)
@@ -76,24 +72,9 @@ class MainActivity : AppCompatActivity() {
             getResult.launch(intent)
         }
 
-        val comparisonSlider: ComparisonSlider = ComparisonSlider(applicationContext)
-        comparisonSlider.layoutParams = ViewGroup.LayoutParams(
-            400.toPixels(scale),
-            400.toPixels(scale)
-        )
-        comparisonSlider.id = View.generateViewId()
-        binding.constraintLayout.addView(comparisonSlider)
+        binding.slider.setBeforeImage(getDrawable(R.drawable.screenshot))
+        binding.slider.setAfterImage(getDrawable(R.drawable.screenshot))
 
-        set.clone(binding.constraintLayout)
-        set.connect(comparisonSlider.id, ConstraintSet.TOP,
-            binding.constraintLayout.id, ConstraintSet.TOP)
-        set.connect(comparisonSlider.id, ConstraintSet.BOTTOM,
-            binding.constraintLayout.id, ConstraintSet.BOTTOM)
-        set.connect(comparisonSlider.id, ConstraintSet.START,
-            binding.constraintLayout.id, ConstraintSet.START)
-        set.connect(comparisonSlider.id, ConstraintSet.END,
-            binding.constraintLayout.id, ConstraintSet.END)
-        set.applyTo(binding.constraintLayout)
     }
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {

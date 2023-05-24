@@ -5,17 +5,23 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.RelativeLayout
+import com.kamiruku.pngoptimiser.comparisonslider.asycn.ClipDrawableProcessorTask
+import com.github.developer__.extensions.loadImage
+import com.github.developer__.extensions.stayVisibleOrGone
 import com.kamiruku.pngoptimiser.R
 import com.kamiruku.pngoptimiser.databinding.SliderLayoutBinding
-import com.kamiruku.pngoptimiser.loadImage
-import com.kamiruku.pngoptimiser.stayVisibleOrGone
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Created by Jemo on 12/5/16.
  */
 
-class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageLoaded {
+class BeforeAfterSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageLoaded {
     private lateinit var binding: SliderLayoutBinding
+    private lateinit var clipDrawableProcessorTask: ClipDrawableProcessorTask<Any>
+
     constructor(context: Context): super(context)
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
@@ -26,30 +32,34 @@ class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageL
             val beforeImage = attr.getDrawable(R.styleable.BeforeAfterSlider_before_image)
             val afterImageUrl = attr.getDrawable(R.styleable.BeforeAfterSlider_after_image)
 
+            binding = SliderLayoutBinding.inflate(
+                LayoutInflater.from(context)
+            )
+
             setSliderThumb(thumbDrawable)
             setBeforeImage(beforeImage)
             setAfterImage(afterImageUrl)
-        }finally {
+        } finally {
             attr.recycle()
         }
+        clipDrawableProcessorTask = ClipDrawableProcessorTask(
+            binding.afterImageViewId, binding.seekbarId, context
+        )
     }
 
     init {
         LayoutInflater.from(context).inflate(R.layout.slider_layout, this)
-        binding = SliderLayoutBinding.inflate(
-            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        )
     }
 
     /**
      * set original image
      */
-    fun setBeforeImage(imageUri: String): ComparisonSlider {
+    fun setBeforeImage(imageUri: String): BeforeAfterSlider {
         binding.beforeImageViewId.loadImage(imageUri)
         return this
     }
 
-    fun setBeforeImage(imgDrawable: Drawable?): ComparisonSlider {
+    fun setBeforeImage(imgDrawable: Drawable?): BeforeAfterSlider {
         binding.beforeImageViewId.loadImage(imgDrawable)
         return this
     }
@@ -58,23 +68,22 @@ class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageL
      * set changed image
      */
     fun setAfterImage(imageUri: String) {
-        ClipDrawableProcessorTask<String>(
-            binding.afterImageViewId,
-            binding.seekbarId,
-            context,
-            this).
-        execute(imageUri)
+        CoroutineScope(Dispatchers.Main).launch {
+            val clipDrawable = clipDrawableProcessorTask.processImage(imageUri)
+            binding.afterImageViewId.setImageDrawable(clipDrawable)
+            binding.seekbarId.stayVisibleOrGone(clipDrawable != null)
+        }
     }
 
     /**
      * set changed image
      */
     fun setAfterImage(imageDrawable: Drawable?) {
-        ClipDrawableProcessorTask<Drawable>(
-            binding.afterImageViewId,
-            binding.seekbarId,
-            context, this).
-        execute(imageDrawable)
+        CoroutineScope(Dispatchers.Main).launch {
+            val clipDrawable = imageDrawable?.let { clipDrawableProcessorTask.processImage(it) }
+            binding.afterImageViewId.setImageDrawable(clipDrawable)
+            binding.seekbarId.stayVisibleOrGone(clipDrawable != null)
+        }
     }
 
     /**
