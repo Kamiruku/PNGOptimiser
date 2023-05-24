@@ -2,16 +2,16 @@ package com.kamiruku.pngoptimiser.comparisonslider
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ClipDrawable
+import android.graphics.drawable.VectorDrawable
 import android.os.AsyncTask
 import android.os.Looper
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.SeekBar
-
 import com.bumptech.glide.Glide
-
 import java.lang.ref.WeakReference
 
 /**
@@ -27,7 +27,6 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
         this.seekBarRef = WeakReference(seekBar)
     }
 
-    @Deprecated("Deprecated in Java")
     override fun doInBackground(vararg args: T): ClipDrawable? {
         Looper.myLooper()?.let { Looper.prepare() }
         try {
@@ -39,19 +38,30 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
                     .into(-1, -1)
                     .get()
             } else {
-                theBitmap = (args[0] as BitmapDrawable).bitmap
+                theBitmap = getBitmap(args[0] as VectorDrawable) !!
             }
             val tmpBitmap = getScaledBitmap(theBitmap)
             if (tmpBitmap != null)
                 theBitmap = tmpBitmap
 
             val bitmapDrawable = BitmapDrawable(context.resources, theBitmap)
-            return ClipDrawable(bitmapDrawable, Gravity.START, ClipDrawable.HORIZONTAL)
+            return ClipDrawable(bitmapDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         return null
+    }
+
+    private fun getBitmap(vectorDrawable: VectorDrawable): Bitmap? {
+        val bitmap = Bitmap.createBitmap(
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
+        vectorDrawable.draw(canvas)
+        return bitmap
     }
 
     private fun getScaledBitmap(bitmap: Bitmap): Bitmap? {
@@ -70,7 +80,6 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
         return null
     }
 
-    @Deprecated("Deprecated in Java")
     override fun onPostExecute(clipDrawable: ClipDrawable?) {
         if (imageRef.get() != null) {
             if (clipDrawable != null) {
@@ -80,7 +89,7 @@ class ClipDrawableProcessorTask<T>(imageView: ImageView, seekBar: SeekBar, priva
                     val progressNum = 5000
                     clipDrawable.level = progressNum
                 } else
-                    clipDrawable.level = seekBarRef.get()!!.progress
+                    clipDrawable.level = seekBarRef.get()?.progress ?: -1
                 loadedFinishedListener?.onLoadedFinished(true)
             } else {
                 loadedFinishedListener?.onLoadedFinished(false)

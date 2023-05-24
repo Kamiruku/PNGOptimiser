@@ -16,7 +16,6 @@ import com.kamiruku.pngoptimiser.stayVisibleOrGone
 
 class ComparisonSlider : RelativeLayout, ClipDrawableProcessorTask.OnAfterImageLoaded {
     private lateinit var binding: SliderLayoutBinding
-
     constructor(context: Context): super(context)
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {

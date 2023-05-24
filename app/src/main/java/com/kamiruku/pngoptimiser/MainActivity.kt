@@ -94,9 +94,6 @@ class MainActivity : AppCompatActivity() {
         set.connect(comparisonSlider.id, ConstraintSet.END,
             binding.constraintLayout.id, ConstraintSet.END)
         set.applyTo(binding.constraintLayout)
-
-        comparisonSlider.setBeforeImage(
-            getDrawable(this, R.drawable.ic_launcher_background))
     }
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
