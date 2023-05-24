@@ -5,19 +5,27 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
+import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.constraintlayout.widget.ConstraintSet
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var selectedImageUri: Uri? = null
+
+    private var mScaleGestureDetector: ScaleGestureDetector? = null
+    private var mScaleFactor = 1.0f
+
+    // this redirects all touch events in the activity to the gesture detector
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        return mScaleGestureDetector!!.onTouchEvent(event!!)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,36 +37,13 @@ class MainActivity : AppCompatActivity() {
         //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 
         val scale = applicationContext.resources.displayMetrics.density
-        val browseImages: Button = Button(applicationContext)
-        //150 dp width, 150 dp height
-        browseImages.layoutParams = ViewGroup.LayoutParams(
-            150.toPixels(scale),
-            ConstraintSet.WRAP_CONTENT
-        )
-        browseImages.id = View.generateViewId()
-        binding.constraintLayout.addView(browseImages)
-
-        //Establishes constraints to the spinner
-        val set: ConstraintSet = ConstraintSet()
-        set.clone(binding.constraintLayout)
-        set.connect(browseImages.id, ConstraintSet.TOP,
-            binding.constraintLayout.id, ConstraintSet.TOP)
-        set.connect(browseImages.id, ConstraintSet.BOTTOM,
-            binding.constraintLayout.id, ConstraintSet.BOTTOM)
-        set.connect(browseImages.id, ConstraintSet.START,
-            binding.constraintLayout.id, ConstraintSet.START)
-        set.connect(browseImages.id, ConstraintSet.END,
-            binding.constraintLayout.id, ConstraintSet.END)
-
-        set.setVerticalBias(browseImages.id, 0.85f)
-        set.applyTo(binding.constraintLayout)
 
         //Curved Corners
-        browseImages.setBackgroundResource(R.drawable.button_background)
-        browseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
-        browseImages.text = getString(R.string.browseImages)
+        binding.browseImages.setBackgroundResource(R.drawable.button_background)
+        binding.browseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
+        binding.browseImages.text = getString(R.string.browseImages)
 
-        browseImages.setOnClickListener {
+        binding.browseImages.setOnClickListener {
             val intent: Intent
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
                 //Android 13
@@ -72,9 +57,7 @@ class MainActivity : AppCompatActivity() {
             getResult.launch(intent)
         }
 
-        binding.slider.setBeforeImage(getDrawable(R.drawable.screenshot))
-        binding.slider.setAfterImage(getDrawable(R.drawable.screenshot))
-
+        mScaleGestureDetector = ScaleGestureDetector(this, ScaleListener())
     }
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -91,6 +74,18 @@ class MainActivity : AppCompatActivity() {
         //Converts from dp/sp to pixels
         return (this * scale + 0.5).toInt()
     }
+
+    private inner class ScaleListener : SimpleOnScaleGestureListener() {
+        // when a scale gesture is detected, use it to resize the image
+        override fun onScale(scaleGestureDetector: ScaleGestureDetector): Boolean {
+            mScaleFactor *= scaleGestureDetector.scaleFactor
+            //mScaleFactor = 0.1f.coerceAtLeast(scaleGestureDetector.scaleFactor.coerceAtMost(10.0f))
+            binding.imageBefore.scaleX = mScaleFactor
+            binding.imageBefore.scaleY = mScaleFactor
+            return true
+        }
+    }
+
 
     /**
      * A native method that is implemented by the 'pngoptimiser' native library,
