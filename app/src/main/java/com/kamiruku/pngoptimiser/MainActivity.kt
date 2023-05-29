@@ -1,31 +1,36 @@
 package com.kamiruku.pngoptimiser
 
+import android.app.Activity
+import android.content.ClipData
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.view.MotionEvent
-import android.view.ScaleGestureDetector
-import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
-import android.widget.ImageView
+import android.provider.OpenableColumns
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
+import id.zelory.compressor.Compressor
+import id.zelory.compressor.constraint.format
+import id.zelory.compressor.constraint.quality
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var selectedImageUri: Uri? = null
-
-    private var mScaleGestureDetector: ScaleGestureDetector? = null
-    private var mScaleFactor = 1.0f
-
-    // this redirects all touch events in the activity to the gesture detector
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        return mScaleGestureDetector!!.onTouchEvent(event!!)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,17 +61,38 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             getResult.launch(intent)
         }
-
-        mScaleGestureDetector = ScaleGestureDetector(this, ScaleListener())
     }
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         //Receiver for image picker
-        if (it.resultCode == 1) {
-            val imageUri: Uri? = it.data?.data
-            if (imageUri != null) {
-                selectedImageUri = imageUri
+        if (it.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = it.data
+            if (data != null) {
+                val clipData: ClipData? = data.clipData
+                if (clipData != null) {
+                    if (clipData.itemCount == 1) {
+                        compressImage(clipData.getItemAt(0).uri)
+                    }
+                } else {
+                    val imageUri: Uri? = it.data?.data
+                    if (imageUri != null) {
+                        println(imageUri)
+                    }
+                }
             }
+        }
+    }
+
+    private fun compressImage(imageUri: Uri) {
+        val file = getFile(applicationContext, imageUri)
+        lifecycleScope.launch {
+            val compressedFile =
+                Compressor.compress(applicationContext, file) {
+                    //Quality will be customisable later on
+                    quality(80)
+                    format(Bitmap.CompressFormat.JPEG)
+                }
+            binding.imageBefore.setImageBitmap(BitmapFactory.decodeFile(compressedFile.absolutePath))
         }
     }
 
@@ -75,15 +101,58 @@ class MainActivity : AppCompatActivity() {
         return (this * scale + 0.5).toInt()
     }
 
-    private inner class ScaleListener : SimpleOnScaleGestureListener() {
-        // when a scale gesture is detected, use it to resize the image
-        override fun onScale(scaleGestureDetector: ScaleGestureDetector): Boolean {
-            mScaleFactor *= scaleGestureDetector.scaleFactor
-            //mScaleFactor = 0.1f.coerceAtLeast(scaleGestureDetector.scaleFactor.coerceAtMost(10.0f))
-            binding.imageBefore.scaleX = mScaleFactor
-            binding.imageBefore.scaleY = mScaleFactor
-            return true
+    @Throws(IOException::class)
+    private fun getFile(context: Context, uri: Uri): File {
+        //Creates File object from Uri
+        val destinationFile: File =
+            File(context.filesDir.path + File.separatorChar + queryName(context, uri))
+        try {
+            //Opens input stream for uri
+            context.contentResolver.openInputStream(uri).use {
+                //Writes data from input stream to destination file
+                createFileFromStream(
+                    it !!,
+                    destinationFile
+                )
+            }
+        } catch (ex: Exception) {
+            Log.d("Save File", ex.message.toString())
+            ex.printStackTrace()
         }
+        //Returns destination file
+        return destinationFile
+    }
+
+    private fun createFileFromStream(ins: InputStream, destination: File?) {
+        //Reads data from input stream and writes it to destination file
+        try {
+            //Creates FOS object using destination file
+            FileOutputStream(destination).use {
+                val buffer = ByteArray(4096)
+                var length: Int
+                while (ins.read(buffer).also { length = it } > 0) {
+                    it.write(buffer, 0, length)
+                }
+                it.flush()
+            }
+        } catch (ex: Exception) {
+            Log.e("Save File", ex.message!!)
+            ex.printStackTrace()
+        }
+    }
+
+    private fun queryName(context: Context, uri: Uri): String {
+        //Creates cursor by querying content resolver using 'uri'
+        val returnCursor: Cursor = context.contentResolver.query(uri, null, null, null, null)!!
+        //Retrieves index of the display name column
+        val nameIndex: Int = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        //Ensures cursor is positioned at the beginning of result set
+        returnCursor.moveToFirst()
+        //Retrieves display name from cursor
+        val name: String = returnCursor.getString(nameIndex)
+        //Closes cursor
+        returnCursor.close()
+        return name
     }
 
 
