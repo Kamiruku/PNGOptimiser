@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import id.zelory.compressor.Compressor
+import id.zelory.compressor.constraint.destination
 import id.zelory.compressor.constraint.format
 import id.zelory.compressor.constraint.quality
 import kotlinx.coroutines.launch
@@ -85,14 +86,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun compressImage(imageUri: Uri) {
         val file = getFile(applicationContext, imageUri)
+        //Compressor.compress is a suspend function
         lifecycleScope.launch {
             val compressedFile =
                 Compressor.compress(applicationContext, file) {
                     //Quality will be customisable later on
                     quality(80)
                     format(Bitmap.CompressFormat.JPEG)
+
                 }
-            binding.imageBefore.setImageBitmap(BitmapFactory.decodeFile(compressedFile.absolutePath))
+            binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(compressedFile.absolutePath))
         }
     }
 
