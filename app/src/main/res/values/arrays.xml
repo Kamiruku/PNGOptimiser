@@ -3,4 +3,10 @@
     <string-array name="fileExtensions">
         <item name="default">Default</item>
     </string-array>
+
+    <string-array name="compressionMethods">
+        <item name="defaultJPG">Default JPG</item>
+        <item name="defaultPNG">Default PNG</item>
+        <item name="pngquant">PNGQuant (Lossy)</item>
+    </string-array>
 </resources>

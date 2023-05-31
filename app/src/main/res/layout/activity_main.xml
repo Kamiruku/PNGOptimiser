@@ -17,7 +17,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.85" />
+        app:layout_constraintVertical_bias="0.95" />
 
     <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/imageViewer"
@@ -48,5 +48,22 @@
         app:layout_constraintHorizontal_bias="0.525"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageViewer" />
+
+    <TextView
+        android:id="@+id/textViewImageSize"
+        android:layout_width="358sp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="100dp"
+        android:textAlignment="textStart"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:backgroundTint="#0512DA"
+        android:clickable="false"
+        android:focusable="false"
+        android:theme="@style/Widget.AppCompat.Button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.433"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

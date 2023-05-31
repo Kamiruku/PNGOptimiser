@@ -5,7 +5,6 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
@@ -17,10 +16,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
-import id.zelory.compressor.Compressor
-import id.zelory.compressor.constraint.destination
-import id.zelory.compressor.constraint.format
-import id.zelory.compressor.constraint.quality
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -75,31 +70,33 @@ class MainActivity : AppCompatActivity() {
                 val clipData: ClipData? = data.clipData
                 if (clipData != null) {
                     if (clipData.itemCount == 1) {
-                        compressImage(clipData.getItemAt(0).uri)
+                        managesImage(clipData.getItemAt(0).uri)
                     }
                 } else {
+                    //For certain devices, clipData obtained when only 1 object is selected will be null
                     val imageUri: Uri? = it.data?.data
                     if (imageUri != null) {
-                        println(imageUri)
+                        managesImage(imageUri)
                     }
                 }
             }
         }
     }
 
-    private fun compressImage(imageUri: Uri) {
+    private fun managesImage(imageUri: Uri) {
+        //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
-        //Compressor.compress is a suspend function
-        lifecycleScope.launch {
-            val compressedFile =
-                Compressor.compress(applicationContext, file) {
-                    //Quality will be customisable later on
-                    quality(80)
-                    format(Bitmap.CompressFormat.JPEG)
+        binding.textViewImageSize.text = "Actual Size ${formatBytes(file.length())}"
+        //Display uncompressed image on image viewer
+        binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
 
-                }
-            binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(compressedFile.absolutePath))
+        //Compressing techniques should not be run on UI thread
+        lifecycleScope.launch {
         }
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        return android.text.format.Formatter.formatFileSize(applicationContext, bytes)
     }
 
     private fun Int.toPixels(scale: Float): Int {
