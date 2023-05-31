@@ -160,18 +160,4 @@ class MainActivity : AppCompatActivity() {
         returnCursor.close()
         return name
     }
-
-
-    /**
-     * A native method that is implemented by the 'pngoptimiser' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
-    companion object {
-        // Used to load the 'pngoptimiser' library on application startup.
-        init {
-            System.loadLibrary("pngoptimiser")
-        }
-    }
 }

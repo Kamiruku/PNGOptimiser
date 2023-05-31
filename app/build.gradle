@@ -8,6 +8,11 @@ android {
     compileSdk 33
 
     defaultConfig {
+        externalNativeBuild {
+            ndkBuild {
+                arguments "APP_ALLOW_MISSING_DEPS=true"
+            }
+        }
         applicationId "com.kamiruku.pngoptimiser"
         minSdk 27
         targetSdk 33
@@ -31,9 +36,8 @@ android {
         jvmTarget = '1.8'
     }
     externalNativeBuild {
-        cmake {
-            path file('src/main/cpp/CMakeLists.txt')
-            version '3.18.1'
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
         }
     }
     buildFeatures {
