@@ -1,7 +1,10 @@
 package com.kamiruku.pngoptimiser
 
+
 class LibJpegTurbo {
-    init {
-        System.loadLibrary("")
+    companion object {
+        init {
+            System.loadLibrary("turbo-jpegandroid")
+        }
     }
 }
