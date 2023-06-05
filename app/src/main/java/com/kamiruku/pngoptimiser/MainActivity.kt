@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Process
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
@@ -17,10 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
+import java.io.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -89,7 +87,6 @@ class MainActivity : AppCompatActivity() {
         binding.textViewImageSize.text = "Actual Size ${formatBytes(file.length())}"
         //Display uncompressed image on image viewer
         binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
-
         //Compressing techniques should not be run on UI thread
         lifecycleScope.launch {
         }
