@@ -1,4 +1,4 @@
-package com.kamiruku.pngoptimiser
+package com.kamiruku.pngoptimiser.activities
 
 import android.app.Activity
 import android.content.ClipData
@@ -9,13 +9,14 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.os.Process
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.kamiruku.pngoptimiser.ActivityUtils
+import com.kamiruku.pngoptimiser.R
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 import java.io.*
