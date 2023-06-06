@@ -12,12 +12,14 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
+import android.view.animation.AnimationUtils
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.ActivityUtils
 import com.kamiruku.pngoptimiser.R
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
+import com.kamiruku.pngoptimiser.fragments.CompressionSelectionFragment
 import kotlinx.coroutines.launch
 import java.io.*
 
@@ -58,6 +60,27 @@ class MainActivity : AppCompatActivity() {
             //Allows > 1 images to be selected
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             getResult.launch(intent)
+        }
+
+        val sfm = supportFragmentManager
+        var settingsFragIsOpen: Boolean = false
+
+        binding.textViewImageSize.setOnClickListener {
+            if (!settingsFragIsOpen) {
+                val ft = sfm.beginTransaction()
+                ft.setCustomAnimations(
+                    R.anim.slide_in_bottom,
+                    R.anim.slide_out_top,
+                    R.anim.slide_in_top,
+                    R.anim.slide_out_bottom
+                )
+                val frag = CompressionSelectionFragment()
+                ft.replace(R.id.fragmentContainerView, frag)
+                    .show(frag)
+                    .commit()
+                settingsFragIsOpen = true
+                println("Fragment popup")
+            }
         }
     }
 

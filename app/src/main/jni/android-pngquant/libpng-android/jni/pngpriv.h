@@ -822,7 +822,7 @@
  * #if PNG_ZLIB_VERNUM != 0 && PNG_ZLIB_VERNUM != ZLIB_VERNUM
  * #  error ZLIB_VERNUM != PNG_ZLIB_VERNUM \
       "-I (include path) error: see the notes in pngpriv.h"
-   /* This means that when pnglibconf.h was built the copy of zlib.h that it
+   * This means that when pnglibconf.h was built the copy of zlib.h that it
     * used is not the same as the one being used here.  Because the build of
     * libpng makes decisions to use inflateInit2 and inflateReset2 based on the
     * zlib version number and because this affects handling of certain broken

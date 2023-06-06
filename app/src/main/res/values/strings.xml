@@ -2,5 +2,5 @@
     <string name="app_name">PNGOptimiser</string>
 
     <string name="browseImages">Browse</string>
-    <string name="compress">Compress</string>
+    <string name="compress">\u0020Compress</string>
 </resources>
