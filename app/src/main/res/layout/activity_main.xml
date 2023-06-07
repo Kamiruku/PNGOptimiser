@@ -7,18 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
-    <Button
-        android:id="@+id/browseImages"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/browseImages"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
-
     <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/imageViewer"
         android:layout_width="350dp"
@@ -29,6 +17,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.100000024" />
+
+    <TextView
+        android:id="@+id/textViewImageSize"
+        android:layout_width="350sp"
+        android:layout_height="36sp"
+        android:layout_centerVertical="true"
+        android:layout_marginBottom="100dp"
+        android:background="@drawable/rounded_corner"
+        android:textAlignment="textStart"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textView"
@@ -46,26 +49,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageViewer" />
 
-    <TextView
-        android:id="@+id/textViewImageSize"
-        android:layout_width="350sp"
-        android:layout_height="30sp"
-        android:layout_marginBottom="100dp"
-        android:background="#0512DA"
-        android:textAlignment="textStart"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
+    <Button
+        android:id="@+id/browseImages"
+        android:layout_width="wrap_content"
+        android:layout_height="36sp"
+        android:text="@string/browse_images"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.95"
+        android:stateListAnimator="@null"/>
+
+    <View
+        android:id="@+id/viewDetectOptionExit"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:layout_width="350dp"
         android:layout_height="350dp"
+        android:layout_marginBottom="-5dp"
+        android:clickable="true"
         app:layout_constraintBottom_toTopOf="@+id/textViewImageSize"
         app:layout_constraintEnd_toEndOf="@+id/textViewImageSize"
-        app:layout_constraintHorizontal_bias="0.625"
         app:layout_constraintStart_toStartOf="@+id/textViewImageSize"
         tools:layout="@layout/fragment_compression_selection" />
 

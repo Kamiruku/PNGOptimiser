@@ -12,7 +12,8 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
-import android.view.animation.AnimationUtils
+import android.view.Gravity
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -41,12 +42,10 @@ class MainActivity : AppCompatActivity() {
         //Night mode
         //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 
-        val scale = applicationContext.resources.displayMetrics.density
-
         //Curved Corners
         binding.browseImages.setBackgroundResource(R.drawable.button_background)
         binding.browseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
-        binding.browseImages.text = getString(R.string.browseImages)
+        binding.browseImages.text = getString(R.string.browse_images)
 
         binding.browseImages.setOnClickListener {
             val intent: Intent
@@ -64,6 +63,12 @@ class MainActivity : AppCompatActivity() {
 
         val sfm = supportFragmentManager
         var settingsFragIsOpen: Boolean = false
+        var frag: CompressionSelectionFragment? = null
+
+        //View is gone from layout - i.e does not have a clickable event
+        binding.viewDetectOptionExit.visibility = View.GONE
+        //Centers text inside the image size textbox vertically
+        binding.textViewImageSize.gravity = Gravity.CENTER_VERTICAL
 
         binding.textViewImageSize.setOnClickListener {
             if (!settingsFragIsOpen) {
@@ -74,12 +79,28 @@ class MainActivity : AppCompatActivity() {
                     R.anim.slide_in_top,
                     R.anim.slide_out_bottom
                 )
-                val frag = CompressionSelectionFragment()
-                ft.replace(R.id.fragmentContainerView, frag)
-                    .show(frag)
+                frag = CompressionSelectionFragment()
+                ft.replace(R.id.fragmentContainerView, frag !!)
+                    .show(frag !!)
                     .commit()
+                binding.viewDetectOptionExit.visibility = View.VISIBLE
                 settingsFragIsOpen = true
-                println("Fragment popup")
+                println("Fragment popup.")
+            }
+        }
+
+        binding.viewDetectOptionExit.setOnClickListener {
+            if (settingsFragIsOpen) {
+                val ft = sfm.beginTransaction()
+                ft.setCustomAnimations(
+                    R.anim.slide_out_bottom,
+                    R.anim.slide_out_bottom
+                )
+                ft.hide(frag !!)
+                    .commit()
+                binding.viewDetectOptionExit.visibility = View.GONE
+                settingsFragIsOpen = false
+                println("Fragment popup close.")
             }
         }
     }
@@ -108,11 +129,16 @@ class MainActivity : AppCompatActivity() {
     private fun managesImage(imageUri: Uri) {
         //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
-        binding.textViewImageSize.text = "Actual Size ${formatBytes(file.length())}"
+        binding.textViewImageSize.text =
+            getString(
+                R.string.actual_image_size,
+                formatBytes(file.length())
+            )
         //Display uncompressed image on image viewer
         binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
         //Compressing techniques should not be run on UI thread
         lifecycleScope.launch {
+
         }
     }
 
@@ -120,7 +146,8 @@ class MainActivity : AppCompatActivity() {
         return android.text.format.Formatter.formatFileSize(applicationContext, bytes)
     }
 
-    private fun Int.toPixels(scale: Float): Int {
+    private fun Int.toPixels(): Int {
+        val scale = applicationContext.resources.displayMetrics.density
         //Converts from dp/sp to pixels
         return (this * scale + 0.5).toInt()
     }
