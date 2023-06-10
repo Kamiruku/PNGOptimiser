@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ConstraintLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:context=".fragments.CompressionSelectionFragment">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/shapeable_image_view"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
+        android:background="@color/light_slade_grey"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/spinner_compression_method"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/label_compression_method" />
+
+    <TextView
+        android:id="@+id/label_compression_method"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="50dp"
+        android:text="@string/compress"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <SeekBar
+        android:id="@+id/seek_bar_quality"
+        android:layout_width="200dp"
+        android:layout_height="45sp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/label_compression_quality" />
+
+    <TextView
+        android:id="@+id/label_compression_quality"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/quality"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_compression_method" />
+
+    <EditText
+        android:id="@+id/edit_text_quality"
+        android:layout_width="48dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:inputType="numberSigned"
+        android:maxLength="3"
+        android:text="100"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@+id/seek_bar_quality"
+        app:layout_constraintTop_toBottomOf="@+id/label_compression_quality" />
+
+    <TextView
+        android:id="@+id/text_view_percentage"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:text="@string/percentage"
+        android:textSize="18sp"
+        android:gravity="center_vertical"
+        app:layout_constraintStart_toEndOf="@+id/edit_text_quality"
+        app:layout_constraintTop_toTopOf="@+id/edit_text_quality" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

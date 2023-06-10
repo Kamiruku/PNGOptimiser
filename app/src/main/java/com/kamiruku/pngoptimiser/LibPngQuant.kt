@@ -3,12 +3,12 @@ package com.kamiruku.pngoptimiser
 import java.io.File
 
 class LibPngQuant {
-    private fun pngQuantFile(inputFile: File?, outputFile: File?): Boolean {
+    fun pngQuantFile(inputFile: File?, outputFile: File?): Boolean {
         //Use default quality in the windows batch file bundled with pngQuant
         return pngQuantFile(inputFile, outputFile, 50, 100)
     }
 
-    private fun pngQuantFile(
+    fun pngQuantFile(
         inputFile: File?,
         outputFile: File?,
         minQuality: Int,
@@ -18,7 +18,7 @@ class LibPngQuant {
         return pngQuantFile(inputFile, outputFile, minQuality, maxQuality, 1)
     }
 
-    private fun pngQuantFile(
+    fun pngQuantFile(
         inputFile: File?,
         outputFile: File?,
         minQuality: Int,

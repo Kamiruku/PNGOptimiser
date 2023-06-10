@@ -23,15 +23,15 @@ static void log_callback(const liq_attr * attr, const char * msg, void * user_in
 
 JNIEXPORT jboolean JNICALL
 Java_com_kamiruku_pngoptimiser_LibPngQuant_00024Companion_nativePngQuantFile(JNIEnv *env, jobject obj,
-                                                              jstring jInFilename,
-                                                              jstring jOutFilename, int jMinQuality,
-                                                              int jMaxQuality, int jSpeed,
-                                                              float jFloyd) {
+                                                                             jstring jInFilename,
+                                                                             jstring jOutFilename, int jMinQuality,
+                                                                             int jMaxQuality, int jSpeed,
+                                                                             float jFloyd) {
     const char *inFilename = (*env)->GetStringUTFChars(env, jInFilename, 0);
     const char *outFilename = (*env)->GetStringUTFChars(env, jOutFilename, 0);
 
     struct pngquant_options options = {
-            .floyd = jFloyd, // floyd-steinberg dithering
+        .floyd = jFloyd, // floyd-steinberg dithering
     };
     options.liq = liq_attr_create();
 

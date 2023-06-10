@@ -5,19 +5,7 @@
     android:id="@+id/constraintLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <Button
-        android:id="@+id/browseImages"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/browseImages"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
+    tools:context=".activities.MainActivity">
 
     <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/imageViewer"
@@ -31,39 +19,66 @@
         app:layout_constraintVertical_bias="0.100000024" />
 
     <TextView
+        android:id="@+id/textViewImageSize"
+        android:layout_width="350sp"
+        android:layout_height="36sp"
+        android:layout_centerVertical="true"
+        android:layout_marginBottom="100dp"
+        android:background="@drawable/rounded_corner"
+        android:textAlignment="textStart"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
         android:id="@+id/textView"
-        android:layout_width="358sp"
-        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_height="36sp"
+        android:layout_width="350sp"
         android:layout_marginTop="20dp"
-        android:backgroundTint="#0512DA"
-        android:clickable="false"
-        android:focusable="false"
+        android:background="@drawable/rounded_corner"
         android:text="@string/compress"
         android:textAlignment="textStart"
         android:textAllCaps="false"
         android:textColor="@color/white"
-        android:textSize="20sp"
-        android:theme="@style/Widget.AppCompat.Button"
+        android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.525"
+        app:layout_constraintHorizontal_bias="0.50"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageViewer" />
 
-    <TextView
-        android:id="@+id/textViewImageSize"
-        android:layout_width="358sp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="100dp"
-        android:textAlignment="textStart"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:backgroundTint="#0512DA"
-        android:clickable="false"
-        android:focusable="false"
-        android:theme="@style/Widget.AppCompat.Button"
+    <Button
+        android:id="@+id/browseImages"
+        android:layout_width="wrap_content"
+        android:layout_height="36sp"
+        android:text="@string/browse_images"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.433"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.95"
+        android:stateListAnimator="@null"/>
+
+    <View
+        android:id="@+id/viewDetectOptionExit"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainerView"
+        android:layout_width="350dp"
+        android:layout_height="0dp"
+        android:clickable="true"
+        app:layout_constraintBottom_toTopOf="@+id/textViewImageSize"
+        app:layout_constraintEnd_toEndOf="@+id/textViewImageSize"
+        app:layout_constraintStart_toStartOf="@+id/textViewImageSize"
+        tools:layout="@layout/fragment_compression_selection" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
