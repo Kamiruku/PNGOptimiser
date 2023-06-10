@@ -75,7 +75,6 @@
         android:id="@+id/fragmentContainerView"
         android:layout_width="350dp"
         android:layout_height="350dp"
-        android:layout_marginBottom="-5dp"
         android:clickable="true"
         app:layout_constraintBottom_toTopOf="@+id/textViewImageSize"
         app:layout_constraintEnd_toEndOf="@+id/textViewImageSize"

@@ -16,6 +16,7 @@ import android.view.Gravity
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.ActivityUtils
 import com.kamiruku.pngoptimiser.R
@@ -63,7 +64,12 @@ class MainActivity : AppCompatActivity() {
 
         val sfm = supportFragmentManager
         var settingsFragIsOpen: Boolean = false
-        var frag: CompressionSelectionFragment? = null
+        val frag: CompressionSelectionFragment = CompressionSelectionFragment()
+
+        sfm.beginTransaction()
+            .add(R.id.fragmentContainerView, frag)
+            .hide(frag)
+            .commit()
 
         //View is gone from layout - i.e does not have a clickable event
         binding.viewDetectOptionExit.visibility = View.GONE
@@ -72,18 +78,20 @@ class MainActivity : AppCompatActivity() {
 
         binding.textViewImageSize.setOnClickListener {
             if (!settingsFragIsOpen) {
+                //Need new fragment transaction per.. transaction
                 val ft = sfm.beginTransaction()
+                //Sliding animation
                 ft.setCustomAnimations(
                     R.anim.slide_in_bottom,
                     R.anim.slide_out_top,
-                    R.anim.slide_in_top,
-                    R.anim.slide_out_bottom
                 )
-                frag = CompressionSelectionFragment()
-                ft.replace(R.id.fragmentContainerView, frag !!)
-                    .show(frag !!)
+                //Shows the actual fragment
+                ft.show(frag)
                     .commit()
                 binding.viewDetectOptionExit.visibility = View.VISIBLE
+                binding.textViewImageSize.background =
+                    AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner_open)
+                //Allows fragment to be hidden
                 settingsFragIsOpen = true
                 println("Fragment popup.")
             }
@@ -91,14 +99,19 @@ class MainActivity : AppCompatActivity() {
 
         binding.viewDetectOptionExit.setOnClickListener {
             if (settingsFragIsOpen) {
+                //Need new fragment transaction per.. transaction
                 val ft = sfm.beginTransaction()
                 ft.setCustomAnimations(
-                    R.anim.slide_out_bottom,
+                    R.anim.slide_in_top,
                     R.anim.slide_out_bottom
                 )
-                ft.hide(frag !!)
+                //Hides the actual fragment
+                ft.hide(frag)
                     .commit()
                 binding.viewDetectOptionExit.visibility = View.GONE
+                binding.textViewImageSize.background =
+                    AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner)
+                //Allows fragment to be shown again
                 settingsFragIsOpen = false
                 println("Fragment popup close.")
             }
