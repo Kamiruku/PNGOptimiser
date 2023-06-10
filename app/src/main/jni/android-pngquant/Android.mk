@@ -45,6 +45,8 @@ LOCAL_STATIC_LIBRARIES := libpng
 
 include $(BUILD_STATIC_LIBRARY)
 
+
+
 include $(CLEAR_VARS)
 LOCAL_MODULE           := pngquantandroid
 LOCAL_LDLIBS           := -lz \

@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
@@ -14,21 +15,32 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.kamiruku.pngoptimiser.ActivityUtils
+import com.kamiruku.pngoptimiser.LibPngQuant
 import com.kamiruku.pngoptimiser.R
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import com.kamiruku.pngoptimiser.fragments.CompressionSelectionFragment
+import id.zelory.compressor.Compressor
+import id.zelory.compressor.constraint.format
+import id.zelory.compressor.constraint.quality
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.*
+import java.nio.file.Files
 
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
+    private val viewModel: ViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,6 +109,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        binding.textView.setOnClickListener {
+
+        }
+
         binding.viewDetectOptionExit.setOnClickListener {
             if (settingsFragIsOpen) {
                 //Need new fragment transaction per.. transaction
@@ -150,8 +166,7 @@ class MainActivity : AppCompatActivity() {
         //Display uncompressed image on image viewer
         binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
         //Compressing techniques should not be run on UI thread
-        lifecycleScope.launch {
-
+        lifecycleScope.launch(Dispatchers.Main) {
         }
     }
 
@@ -217,5 +232,21 @@ class MainActivity : AppCompatActivity() {
         //Closes cursor
         returnCursor.close()
         return name
+    }
+}
+
+class ViewModel: androidx.lifecycle.ViewModel() {
+    private val mutableSelectedCompression = MutableLiveData<String>()
+    val selectedCompression: LiveData<String> get() = mutableSelectedCompression
+
+    fun changeCompression(selected: String) {
+        mutableSelectedCompression.value = selected
+    }
+
+    private val mutableSelectedQuality = MutableLiveData<Int>()
+    val selectedQuality: LiveData<Int> get() = mutableSelectedQuality
+
+    fun changeQuality(selected: Int) {
+        mutableSelectedQuality.value = selected
     }
 }
