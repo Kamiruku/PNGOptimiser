@@ -20,6 +20,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
@@ -132,8 +133,12 @@ class MainActivity : AppCompatActivity() {
                 println("Fragment popup close.")
 
                 if (selectedUri != null) {
-                    if (compressType != viewModel.selectedCompression.value) {
+                    if (compressType != viewModel.selectedCompression.value || quality != viewModel.selectedQuality.value) {
+                        //A check is done to see if the user has changed the compression type or the quality
+                        compressType = viewModel.selectedCompression.value ?: ""
+                        quality = viewModel.selectedQuality.value ?: 0
 
+                        managesImage(selectedUri !!, compressType, quality)
                     }
                 }
             }
@@ -146,24 +151,32 @@ class MainActivity : AppCompatActivity() {
             val data: Intent? = it.data
             if (data != null) {
                 val clipData: ClipData? = data.clipData
-                if (clipData != null) {
-                    if (clipData.itemCount == 1) {
-                        selectedUri = clipData.getItemAt(0).uri
-                        managesImage(clipData.getItemAt(0).uri)
-                    }
+                if (clipData != null && clipData.itemCount == 1) {
+                    val imageUri: Uri = clipData.getItemAt(0).uri
+                    selectedUri = imageUri
+                    managesImage(
+                        imageUri,
+                        viewModel.selectedCompression.value ?: "",
+                        viewModel.selectedQuality.value ?: 0
+                    )
+
                 } else {
                     //For certain devices, clipData obtained when only 1 object is selected will be null
                     val imageUri: Uri? = it.data?.data
                     selectedUri = imageUri
                     if (imageUri != null) {
-                        managesImage(imageUri)
+                        managesImage(
+                            imageUri,
+                            viewModel.selectedCompression.value ?: "",
+                            viewModel.selectedQuality.value ?: 0
+                        )
                     }
                 }
             }
         }
     }
 
-    private fun managesImage(imageUri: Uri) {
+    private fun managesImage(imageUri: Uri, compressType: String, quality: Int) {
         //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
         binding.textViewBeforeSize.text =
@@ -176,14 +189,14 @@ class MainActivity : AppCompatActivity() {
         //Compressing techniques should not be run on UI thread
         lifecycleScope.launch(Dispatchers.Main) {
             withContext(Dispatchers.IO) {
-                val compressionType = when (viewModel.selectedCompression.value) {
+                val compressionType = when (compressType) {
                     "Original" -> OriginalFile()
                     "Default JPG" -> DefaultJPG()
                     "Default PNG" -> DefaultPNG()
                     "PNGQuant (Lossy)" -> PNGQuant()
                     else -> null
                 }
-                val newFile = compressionType?.compress(file, viewModel.selectedQuality.value !!, applicationContext)
+                val newFile = compressionType?.compress(file, quality, applicationContext)
                 binding.textViewAfterSize.text =
                     getString(
                         R.string.compressed_image_size,
