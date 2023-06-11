@@ -40,6 +40,7 @@ import java.io.*
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: ViewModel by viewModels()
+    private var selectedUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,7 +96,7 @@ class MainActivity : AppCompatActivity() {
                 //Sliding animation
                 ft.setCustomAnimations(
                     R.anim.slide_in_bottom,
-                    R.anim.slide_in_bottom,
+                    R.anim.slide_out_bottom,
                 )
                 //Shows the actual fragment
                 ft.show(frag)
@@ -109,12 +110,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        var compressType: String = ""
+        var quality: Int = 0
+
         binding.viewDetectOptionExit.setOnClickListener {
             if (settingsFragIsOpen) {
                 //Need new fragment transaction per.. transaction
                 val ft = sfm.beginTransaction()
                 ft.setCustomAnimations(
-                    R.anim.slide_out_bottom,
+                    R.anim.slide_in_bottom,
                     R.anim.slide_out_bottom,
                 )
                 //Hides the actual fragment
@@ -126,6 +130,12 @@ class MainActivity : AppCompatActivity() {
                 //Allows fragment to be shown again
                 settingsFragIsOpen = false
                 println("Fragment popup close.")
+
+                if (selectedUri != null) {
+                    if (compressType != viewModel.selectedCompression.value) {
+
+                    }
+                }
             }
         }
     }
@@ -138,11 +148,13 @@ class MainActivity : AppCompatActivity() {
                 val clipData: ClipData? = data.clipData
                 if (clipData != null) {
                     if (clipData.itemCount == 1) {
+                        selectedUri = clipData.getItemAt(0).uri
                         managesImage(clipData.getItemAt(0).uri)
                     }
                 } else {
                     //For certain devices, clipData obtained when only 1 object is selected will be null
                     val imageUri: Uri? = it.data?.data
+                    selectedUri = imageUri
                     if (imageUri != null) {
                         managesImage(imageUri)
                     }
@@ -164,49 +176,14 @@ class MainActivity : AppCompatActivity() {
         //Compressing techniques should not be run on UI thread
         lifecycleScope.launch(Dispatchers.Main) {
             withContext(Dispatchers.IO) {
-                var newFile: File? = null
-                when (viewModel.selectedCompression.value) {
-                    "Original" -> {
-                        newFile = File(cacheDir, file.name)
-                        file.copyTo(newFile)
-                    }
-                    "Default JPG" -> {
-                        newFile = File(cacheDir, "${file.nameWithoutExtension}.jpg")
-                        val compressedImage = Compressor.compress(applicationContext, file) {
-                            quality(viewModel.selectedQuality.value ?: 80)
-                            format(Bitmap.CompressFormat.JPEG)
-                        }
-                        compressedImage.copyTo(newFile)
-                    }
-                    "Default PNG" -> {
-                        newFile = File(cacheDir, "${file.nameWithoutExtension}.png")
-                        val compressedImage = Compressor.compress(applicationContext, file) {
-                            quality(viewModel.selectedQuality.value ?: 80)
-                            format(Bitmap.CompressFormat.PNG)
-                        }
-                        compressedImage.copyTo(newFile)
-                    }
-                    "PNGQuant (Lossy)" -> {
-                        if (file.extension.lowercase() != "png") {
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(
-                                    applicationContext,
-                                    "Compressing non PNG is not allowed!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            return@withContext
-                        }
-                        newFile = File(cacheDir, "${file.nameWithoutExtension}.png")
-                        val pngquant = LibPngQuant()
-                        pngquant.pngQuantFile(
-                            file,
-                            newFile,
-                            viewModel.selectedQuality.value ?: 80,
-                            viewModel.selectedQuality.value ?: 80
-                        )
-                    }
+                val compressionType = when (viewModel.selectedCompression.value) {
+                    "Original" -> OriginalFile()
+                    "Default JPG" -> DefaultJPG()
+                    "Default PNG" -> DefaultPNG()
+                    "PNGQuant (Lossy)" -> PNGQuant()
+                    else -> null
                 }
+                val newFile = compressionType?.compress(file, viewModel.selectedQuality.value !!, applicationContext)
                 binding.textViewAfterSize.text =
                     getString(
                         R.string.compressed_image_size,

@@ -83,7 +83,8 @@ class CompressionSelectionFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun afterTextChanged(s: Editable?) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                when (binding.editTextQuality.toString().toIntOrNull()) {
+                val beforeProgress = binding.editTextQuality.text.toString().toIntOrNull()
+                when (beforeProgress) {
                     null -> binding.seekBarQuality.progress = 0
                     in 0..100 ->
                         binding.seekBarQuality.progress =
@@ -91,7 +92,7 @@ class CompressionSelectionFragment : Fragment() {
                      else -> binding.seekBarQuality.progress = 100
                 }
 
-                viewModel.changeQuality(binding.editTextQuality.text.toString().toInt())
+                viewModel.changeQuality(beforeProgress ?: 0)
                 println("Selected Quality: ${viewModel.selectedQuality.value}")
                 //Puts cursor at *end* of edit text
                 binding.editTextQuality.setSelection(binding.editTextQuality.text.length)
