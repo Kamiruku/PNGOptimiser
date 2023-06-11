@@ -20,13 +20,15 @@ class FormatQualityConstraint(
     private val format: Bitmap.CompressFormat,
     private val quality: Int
 ) : Constraint {
+    private var isResolved = false
 
     override fun isSatisfied(imageFile: File): Boolean {
-        return format == imageFile.compressFormat()
+        return isResolved
     }
 
     override fun satisfy(imageFile: File): File {
-        return overWrite(imageFile, loadBitmap(imageFile), format, quality = quality)
+        isResolved = true
+        return overWrite(imageFile, loadBitmap(imageFile), format = format, quality = quality)
     }
 }
 

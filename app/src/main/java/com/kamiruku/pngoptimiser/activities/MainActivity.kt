@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var compressType: String = ""
+        var compressType: String = "Original"
         var quality: Int = 0
 
         binding.viewDetectOptionExit.setOnClickListener {
@@ -204,6 +204,7 @@ class MainActivity : AppCompatActivity() {
                         formatBytes(newFile?.length() ?: 0)
                     )
                 newFile?.delete()
+                file.delete()
             }
         }
     }
