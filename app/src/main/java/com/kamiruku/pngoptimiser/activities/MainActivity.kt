@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -19,13 +18,14 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import com.kamiruku.pngoptimiser.ActivityUtils
-import com.kamiruku.pngoptimiser.LibPngQuant
-import com.kamiruku.pngoptimiser.R
+import com.bumptech.glide.Glide
+import com.davemorrissey.labs.subscaleview.ImageSource
+import com.kamiruku.pngoptimiser.*
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import com.kamiruku.pngoptimiser.fragments.CompressionSelectionFragment
 import id.zelory.compressor.Compressor
@@ -35,7 +35,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.*
-import java.nio.file.Files
 
 
 class MainActivity : AppCompatActivity() {
@@ -53,14 +52,14 @@ class MainActivity : AppCompatActivity() {
         aUtils.hideStatus(window)
 
         //Night mode
-        //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 
         //Curved Corners
-        binding.browseImages.setBackgroundResource(R.drawable.button_background)
-        binding.browseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
-        binding.browseImages.text = getString(R.string.browse_images)
+        binding.buttonBrowseImages.setBackgroundResource(R.drawable.button_background)
+        binding.buttonBrowseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
+        binding.buttonBrowseImages.text = getString(R.string.browse_images)
 
-        binding.browseImages.setOnClickListener {
+        binding.buttonBrowseImages.setOnClickListener {
             val intent: Intent
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
                 //Android 13
@@ -79,29 +78,30 @@ class MainActivity : AppCompatActivity() {
         val frag: CompressionSelectionFragment = CompressionSelectionFragment()
 
         sfm.beginTransaction()
-            .add(R.id.fragmentContainerView, frag)
+            .add(R.id.fragment_container_view, frag)
             .hide(frag)
             .commit()
 
         //View is gone from layout - i.e does not have a clickable event
         binding.viewDetectOptionExit.visibility = View.GONE
         //Centers text inside the image size textbox vertically
-        binding.textViewImageSize.gravity = Gravity.CENTER_VERTICAL
+        binding.textViewBeforeSize.gravity = Gravity.CENTER_VERTICAL
+        binding.textViewAfterSize.gravity = Gravity.CENTER_VERTICAL
 
-        binding.textViewImageSize.setOnClickListener {
+        binding.textViewBeforeSize.setOnClickListener {
             if (!settingsFragIsOpen) {
                 //Need new fragment transaction per.. transaction
                 val ft = sfm.beginTransaction()
                 //Sliding animation
                 ft.setCustomAnimations(
                     R.anim.slide_in_bottom,
-                    R.anim.slide_out_top,
+                    R.anim.slide_in_bottom,
                 )
                 //Shows the actual fragment
                 ft.show(frag)
                     .commit()
                 binding.viewDetectOptionExit.visibility = View.VISIBLE
-                binding.textViewImageSize.background =
+                binding.textViewBeforeSize.background =
                     AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner_open)
                 //Allows fragment to be hidden
                 settingsFragIsOpen = true
@@ -109,23 +109,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.textView.setOnClickListener {
-
-        }
-
         binding.viewDetectOptionExit.setOnClickListener {
             if (settingsFragIsOpen) {
                 //Need new fragment transaction per.. transaction
                 val ft = sfm.beginTransaction()
                 ft.setCustomAnimations(
-                    R.anim.slide_in_top,
-                    R.anim.slide_out_bottom
+                    R.anim.slide_out_bottom,
+                    R.anim.slide_out_bottom,
                 )
                 //Hides the actual fragment
                 ft.hide(frag)
                     .commit()
                 binding.viewDetectOptionExit.visibility = View.GONE
-                binding.textViewImageSize.background =
+                binding.textViewBeforeSize.background =
                     AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner)
                 //Allows fragment to be shown again
                 settingsFragIsOpen = false
@@ -158,15 +154,66 @@ class MainActivity : AppCompatActivity() {
     private fun managesImage(imageUri: Uri) {
         //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
-        binding.textViewImageSize.text =
+        binding.textViewBeforeSize.text =
             getString(
                 R.string.actual_image_size,
                 formatBytes(file.length())
             )
         //Display uncompressed image on image viewer
-        binding.imageViewer.setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
+        binding.imageViewer.setImage(ImageSource.uri(imageUri))
         //Compressing techniques should not be run on UI thread
         lifecycleScope.launch(Dispatchers.Main) {
+            withContext(Dispatchers.IO) {
+                var newFile: File? = null
+                when (viewModel.selectedCompression.value) {
+                    "Original" -> {
+                        newFile = File(cacheDir, file.name)
+                        file.copyTo(newFile)
+                    }
+                    "Default JPG" -> {
+                        newFile = File(cacheDir, "${file.nameWithoutExtension}.jpg")
+                        val compressedImage = Compressor.compress(applicationContext, file) {
+                            quality(viewModel.selectedQuality.value ?: 80)
+                            format(Bitmap.CompressFormat.JPEG)
+                        }
+                        compressedImage.copyTo(newFile)
+                    }
+                    "Default PNG" -> {
+                        newFile = File(cacheDir, "${file.nameWithoutExtension}.png")
+                        val compressedImage = Compressor.compress(applicationContext, file) {
+                            quality(viewModel.selectedQuality.value ?: 80)
+                            format(Bitmap.CompressFormat.PNG)
+                        }
+                        compressedImage.copyTo(newFile)
+                    }
+                    "PNGQuant (Lossy)" -> {
+                        if (file.extension.lowercase() != "png") {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    applicationContext,
+                                    "Compressing non PNG is not allowed!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            return@withContext
+                        }
+                        newFile = File(cacheDir, "${file.nameWithoutExtension}.png")
+                        val pngquant = LibPngQuant()
+                        pngquant.pngQuantFile(
+                            file,
+                            newFile,
+                            viewModel.selectedQuality.value ?: 80,
+                            viewModel.selectedQuality.value ?: 80
+                        )
+                    }
+                }
+                binding.textViewAfterSize.text =
+                    getString(
+                        R.string.compressed_image_size,
+                        formatBytes(newFile?.length() ?: 0)
+                    )
+                newFile?.delete()
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.kamiruku.pngoptimiser.fragments
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,6 +11,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import androidx.core.content.ContextCompat.getColor
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.shape.CornerFamily
@@ -46,7 +48,8 @@ class CompressionSelectionFragment : Fragment() {
             1.toPixels(),
             1.toPixels()
         )
-
+        binding.shapeableImageView.strokeColor =
+            ColorStateList.valueOf(context?.getColor(R.color.white) ?: 0)
         binding.seekBarQuality.progress = 100
 
         val compressionMethods: Array<String> = resources.getStringArray(R.array.compressionMethods)
@@ -72,7 +75,7 @@ class CompressionSelectionFragment : Fragment() {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 binding.editTextQuality.setText(progress.toString())
                 viewModel.changeQuality(progress)
-                println(viewModel.selectedQuality.value)
+                println("Selected Quality: ${viewModel.selectedQuality.value}")
             }
         })
 
@@ -80,21 +83,21 @@ class CompressionSelectionFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun afterTextChanged(s: Editable?) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if ((binding.editTextQuality.text.toString() != "") && (binding.editTextQuality.text.toString().toInt()) <= 100) {
-                    binding.seekBarQuality.progress =
-                        binding.editTextQuality.text.toString().toInt()
-                } else {
-                    binding.editTextQuality.setText("100")
-                    binding.seekBarQuality.progress = 100
+                when (binding.editTextQuality.toString().toIntOrNull()) {
+                    null -> binding.seekBarQuality.progress = 0
+                    in 0..100 ->
+                        binding.seekBarQuality.progress =
+                            binding.editTextQuality.text.toString().toInt()
+                     else -> binding.seekBarQuality.progress = 100
                 }
 
                 viewModel.changeQuality(binding.editTextQuality.text.toString().toInt())
+                println("Selected Quality: ${viewModel.selectedQuality.value}")
+                //Puts cursor at *end* of edit text
                 binding.editTextQuality.setSelection(binding.editTextQuality.text.length)
-                println(viewModel.selectedQuality.value)
             }
 
         })
-
         return view
     }
 

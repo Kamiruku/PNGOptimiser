@@ -7,8 +7,8 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
-    <com.github.chrisbanes.photoview.PhotoView
-        android:id="@+id/imageViewer"
+    <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+        android:id="@+id/image_viewer"
         android:layout_width="350dp"
         android:layout_height="350dp"
         android:background="@drawable/image_border"
@@ -19,7 +19,7 @@
         app:layout_constraintVertical_bias="0.100000024" />
 
     <TextView
-        android:id="@+id/textViewImageSize"
+        android:id="@+id/text_view_before_size"
         android:layout_width="350sp"
         android:layout_height="36sp"
         android:layout_centerVertical="true"
@@ -33,7 +33,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/text_view_after_size"
         android:layout_centerVertical="true"
         android:layout_height="36sp"
         android:layout_width="350sp"
@@ -47,10 +47,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.50"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewer" />
+        app:layout_constraintTop_toBottomOf="@+id/image_viewer" />
 
     <Button
-        android:id="@+id/browseImages"
+        android:id="@+id/button_browse_images"
         android:layout_width="wrap_content"
         android:layout_height="36sp"
         android:text="@string/browse_images"
@@ -63,7 +63,7 @@
         android:stateListAnimator="@null"/>
 
     <View
-        android:id="@+id/viewDetectOptionExit"
+        android:id="@+id/view_detect_option_exit"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -72,13 +72,13 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragmentContainerView"
-        android:layout_width="350dp"
+        android:id="@+id/fragment_container_view"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:clickable="true"
-        app:layout_constraintBottom_toTopOf="@+id/textViewImageSize"
-        app:layout_constraintEnd_toEndOf="@+id/textViewImageSize"
-        app:layout_constraintStart_toStartOf="@+id/textViewImageSize"
+        app:layout_constraintBottom_toTopOf="@+id/text_view_before_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         tools:layout="@layout/fragment_compression_selection" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
