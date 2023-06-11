@@ -64,7 +64,6 @@ class CompressionSelectionFragment : Fragment() {
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 viewModel.changeCompression(binding.spinnerCompressionMethod.selectedItem.toString())
-                println(viewModel.selectedCompression.value)
             }
         }
 
@@ -75,7 +74,6 @@ class CompressionSelectionFragment : Fragment() {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 binding.editTextQuality.setText(progress.toString())
                 viewModel.changeQuality(progress)
-                println("Selected Quality: ${viewModel.selectedQuality.value}")
             }
         })
 
@@ -89,11 +87,10 @@ class CompressionSelectionFragment : Fragment() {
                     in 0..100 ->
                         binding.seekBarQuality.progress =
                             binding.editTextQuality.text.toString().toInt()
-                     else -> binding.seekBarQuality.progress = 100
+                    else -> binding.seekBarQuality.progress = 100
                 }
 
                 viewModel.changeQuality(beforeProgress ?: 0)
-                println("Selected Quality: ${viewModel.selectedQuality.value}")
                 //Puts cursor at *end* of edit text
                 binding.editTextQuality.setSelection(binding.editTextQuality.text.length)
             }

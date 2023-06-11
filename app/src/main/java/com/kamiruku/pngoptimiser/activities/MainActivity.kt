@@ -43,6 +43,11 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: ViewModel by viewModels()
     private var selectedUri: Uri? = null
 
+    init {
+        //Night mode before screen starts
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -53,14 +58,12 @@ class MainActivity : AppCompatActivity() {
         aUtils.hideDecor(window)
         aUtils.hideStatus(window)
 
-        //Night mode
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-
         //Curved Corners
-        binding.buttonBrowseImages.setBackgroundResource(R.drawable.button_background)
-        binding.buttonBrowseImages.setBackgroundColor(Color.parseColor("#80512DA8"))
-        binding.buttonBrowseImages.text = getString(R.string.browse_images)
-
+        binding.buttonBrowseImages.apply {
+            setBackgroundResource(R.drawable.button_background)
+            setBackgroundColor(Color.parseColor("#80512DA8"))
+            text = getString(R.string.browse_images)
+        }
         binding.buttonBrowseImages.setOnClickListener {
             val intent: Intent
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
@@ -68,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                 intent = Intent(MediaStore.ACTION_PICK_IMAGES)
             else {
                 intent = Intent(Intent.ACTION_PICK)
-                intent.type = "image/*"
+                    .apply { type = "image/*" }
             }
             //Allows > 1 images to be selected
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
@@ -147,31 +150,29 @@ class MainActivity : AppCompatActivity() {
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         //Receiver for image picker
-        if (it.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = it.data
-            if (data != null) {
-                val clipData: ClipData? = data.clipData
-                if (clipData != null && clipData.itemCount == 1) {
-                    val imageUri: Uri = clipData.getItemAt(0).uri
-                    selectedUri = imageUri
-                    managesImage(
-                        imageUri,
-                        viewModel.selectedCompression.value ?: "",
-                        viewModel.selectedQuality.value ?: 0
-                    )
+        if (it.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val data: Intent = it.data ?: return@registerForActivityResult
 
-                } else {
-                    //For certain devices, clipData obtained when only 1 object is selected will be null
-                    val imageUri: Uri? = it.data?.data
-                    selectedUri = imageUri
-                    if (imageUri != null) {
-                        managesImage(
-                            imageUri,
-                            viewModel.selectedCompression.value ?: "",
-                            viewModel.selectedQuality.value ?: 0
-                        )
-                    }
-                }
+        val clipData: ClipData? = data.clipData
+
+        if (clipData != null && clipData.itemCount == 1) {
+            val imageUri: Uri = clipData.getItemAt(0).uri
+            selectedUri = imageUri
+            managesImage(
+                imageUri,
+                viewModel.selectedCompression.value ?: "",
+                viewModel.selectedQuality.value ?: 0
+            )
+        } else {
+            //For certain devices, clipData obtained when only 1 object is selected will be null
+            val imageUri: Uri? = it.data?.data
+            selectedUri = imageUri
+            if (imageUri != null) {
+                managesImage(
+                    imageUri,
+                    viewModel.selectedCompression.value ?: "",
+                    viewModel.selectedQuality.value ?: 0
+                )
             }
         }
     }
