@@ -195,6 +195,7 @@ class MainActivity : AppCompatActivity() {
                     "Default JPG" -> DefaultJPG()
                     "Default PNG" -> DefaultPNG()
                     "PNGQuant (Lossy)" -> PNGQuant()
+                    "Luban" -> LubanCompress()
                     else -> null
                 }
                 val newFile = compressionType?.compress(file, quality, applicationContext)
@@ -204,7 +205,7 @@ class MainActivity : AppCompatActivity() {
                         formatBytes(newFile?.length() ?: 0)
                     )
                 newFile?.delete()
-                file.delete()
+                //file.delete()
             }
         }
     }

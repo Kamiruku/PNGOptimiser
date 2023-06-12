@@ -1,9 +1,12 @@
 package com.kamiruku.pngoptimiser
 
+import android.graphics.Bitmap
+
+
+
+
 class LibJpegTurbo {
-    companion object {
-        init {
-            System.loadLibrary("turbo-jpegandroid")
-        }
+    init {
+        System.loadLibrary("turbo-jpegandroid")
     }
 }

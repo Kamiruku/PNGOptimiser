@@ -9,5 +9,6 @@
         <item name="defaultJPG">Default JPG</item>
         <item name="defaultPNG">Default PNG</item>
         <item name="pngquant">PNGQuant (Lossy)</item>
+        <item name="luban">Luban</item>
     </string-array>
 </resources>
