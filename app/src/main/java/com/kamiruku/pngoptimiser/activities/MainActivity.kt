@@ -5,7 +5,6 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -14,24 +13,18 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.kamiruku.pngoptimiser.*
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import com.kamiruku.pngoptimiser.fragments.CompressionSelectionFragment
-import id.zelory.compressor.Compressor
-import id.zelory.compressor.constraint.format
-import id.zelory.compressor.constraint.quality
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -141,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                         compressType = viewModel.selectedCompression.value ?: ""
                         quality = viewModel.selectedQuality.value ?: 0
 
-                        managesImage(selectedUri !!, compressType, quality)
+                        managesImage(selectedUri ?: Uri.EMPTY, compressType, quality)
                     }
                 }
             }

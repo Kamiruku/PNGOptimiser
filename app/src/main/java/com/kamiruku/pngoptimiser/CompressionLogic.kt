@@ -2,11 +2,11 @@ package com.kamiruku.pngoptimiser
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Toast
 import com.kamiruku.pngoptimiser.compressor.constraint.qualityFormat
 import id.zelory.compressor.Compressor
 import id.zelory.compressor.constraint.*
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.shaohui.advancedluban.Luban
@@ -67,8 +67,9 @@ class PNGQuant: CompressionLogic {
 
 class LubanCompress: CompressionLogic {
     override suspend fun compress(file: File, quality: Int, context: Context): File? {
-        var newFile: File? = null
-        Luban.compress(context, file)
+        val deferred = CompletableDeferred<File?>()
+
+        Luban.compress(file, context.cacheDir)
             .putGear(Luban.THIRD_GEAR)
             .setCompressFormat(Bitmap.CompressFormat.JPEG)
             .launch(
@@ -78,15 +79,16 @@ class LubanCompress: CompressionLogic {
                     }
 
                     override fun onSuccess(file: File?) {
-                        newFile = file
+                        deferred.complete(file)
                     }
 
                     override fun onError(e: Throwable?) {
                         e?.printStackTrace()
                         Toast.makeText(context, "An error has occured. Check stack trace for more information.", Toast.LENGTH_SHORT).show()
+                        deferred.complete(null)
                     }
                 }
             )
-        return newFile
+        return deferred.await()
     }
 }

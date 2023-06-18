@@ -11,6 +11,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat.getColor
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -48,9 +49,13 @@ class CompressionSelectionFragment : Fragment() {
             1.toPixels(),
             1.toPixels()
         )
+
         binding.shapeableImageView.strokeColor =
             ColorStateList.valueOf(context?.getColor(R.color.white) ?: 0)
-        binding.seekBarQuality.progress = 100
+        binding.seekBarQualityContinuous.progress = 100
+
+        binding.seekBarQualityDiscrete.progress = 3
+        binding.seekBarQualityDiscrete.visibility = View.GONE
 
         val compressionMethods: Array<String> = resources.getStringArray(R.array.compressionMethods)
         val adapterCompressionMethods: ArrayAdapter<String> =
@@ -59,23 +64,50 @@ class CompressionSelectionFragment : Fragment() {
 
         val viewModel: ViewModel by activityViewModels()
 
+        val set = ConstraintSet()
+        set.clone(binding.ConstraintLayout)
+
         binding.spinnerCompressionMethod.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parentView: AdapterView<*>?) { }
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 viewModel.changeCompression(binding.spinnerCompressionMethod.selectedItem.toString())
+
+                if (binding.spinnerCompressionMethod.selectedItem.toString() == "Luban") {
+                    set.connect(
+                        binding.editTextQuality.id, ConstraintSet.START,
+                        binding.seekBarQualityDiscrete.id, ConstraintSet.END, 10.toPixels()
+                    )
+                    set.applyTo(binding.ConstraintLayout)
+                    binding.seekBarQualityDiscrete.visibility = View.VISIBLE
+                    binding.seekBarQualityContinuous.visibility = View.GONE
+
+                    binding.editTextQuality.setText(binding.seekBarQualityDiscrete.progress.toString())
+                } else {
+                    set.connect(
+                        binding.editTextQuality.id, ConstraintSet.START,
+                        binding.seekBarQualityContinuous.id, ConstraintSet.END, 10.toPixels()
+                    )
+                    set.applyTo(binding.ConstraintLayout)
+                    binding.seekBarQualityDiscrete.visibility = View.GONE
+                    binding.seekBarQualityContinuous.visibility = View.VISIBLE
+
+                    binding.editTextQuality.setText(binding.seekBarQualityContinuous.progress.toString())
+                }
             }
         }
 
-        binding.seekBarQuality.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+        val seekBarListener = object: OnSeekBarChangeListener {
             override fun onStopTrackingTouch(seekBar: SeekBar) { }
             override fun onStartTrackingTouch(seekBar: SeekBar) { }
-
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 binding.editTextQuality.setText(progress.toString())
                 viewModel.changeQuality(progress)
             }
-        })
+        }
+
+        binding.seekBarQualityContinuous.setOnSeekBarChangeListener(seekBarListener)
+        binding.seekBarQualityDiscrete.setOnSeekBarChangeListener(seekBarListener)
 
         binding.editTextQuality.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
@@ -83,11 +115,11 @@ class CompressionSelectionFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val beforeProgress = binding.editTextQuality.text.toString().toIntOrNull()
                 when (beforeProgress) {
-                    null -> binding.seekBarQuality.progress = 0
+                    null -> binding.seekBarQualityDiscrete.progress = 0
                     in 0..100 ->
-                        binding.seekBarQuality.progress =
+                        binding.seekBarQualityDiscrete.progress =
                             binding.editTextQuality.text.toString().toInt()
-                    else -> binding.seekBarQuality.progress = 100
+                    else -> binding.seekBarQualityDiscrete.progress = 100
                 }
 
                 viewModel.changeQuality(beforeProgress ?: 0)
