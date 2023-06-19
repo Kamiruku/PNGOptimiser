@@ -2,6 +2,7 @@ package com.kamiruku.pngoptimiser
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.widget.Toast
 import com.kamiruku.pngoptimiser.compressor.constraint.qualityFormat
 import id.zelory.compressor.Compressor
@@ -58,6 +59,9 @@ class PNGQuant: CompressionLogic {
             }
             return null
         }
+
+        Log.i("PNGQuant", "File: ${file.name} \n Quality: $quality")
+
         val pngQuant = LibPngQuant()
         val newFile = File(context.cacheDir, file.name)
         pngQuant.pngQuantFile(file, newFile, max(quality - 10, 0), min(quality + 10, 100))
@@ -69,8 +73,16 @@ class LubanCompress: CompressionLogic {
     override suspend fun compress(file: File, quality: Int, context: Context): File? {
         val deferred = CompletableDeferred<File?>()
 
+        val gear = when (quality) {
+            0 -> Luban.FIRST_GEAR
+            1-> Luban.THIRD_GEAR
+            else -> Luban.THIRD_GEAR
+        }
+
+        Log.i("Luban", "File: ${file.name} \n Quality: $quality")
+
         Luban.compress(file, context.cacheDir)
-            .putGear(Luban.THIRD_GEAR)
+            .putGear(gear)
             .setCompressFormat(Bitmap.CompressFormat.JPEG)
             .launch(
                 object: OnCompressListener {

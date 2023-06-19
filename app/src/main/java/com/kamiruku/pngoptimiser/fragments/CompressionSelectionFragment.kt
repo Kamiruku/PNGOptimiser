@@ -37,6 +37,7 @@ class CompressionSelectionFragment : Fragment() {
                 layoutInflater, container, false)
         val view = binding.root
 
+        val paddingSize = 1.toPixels()
         binding.shapeableImageView.shapeAppearanceModel =
             binding.shapeableImageView.shapeAppearanceModel
                 .toBuilder()
@@ -44,18 +45,21 @@ class CompressionSelectionFragment : Fragment() {
                 .setTopRightCorner(CornerFamily.ROUNDED, 5f)
                 .build()
         binding.shapeableImageView.setPadding(
-            1.toPixels(),
-            1.toPixels(),
-            1.toPixels(),
-            1.toPixels()
+            paddingSize,
+            paddingSize,
+            paddingSize,
+            paddingSize
         )
-
         binding.shapeableImageView.strokeColor =
-            ColorStateList.valueOf(context?.getColor(R.color.white) ?: 0)
+            ColorStateList.valueOf(requireContext().getColor(R.color.white))
+
         binding.seekBarQualityContinuous.progress = 100
 
-        binding.seekBarQualityDiscrete.progress = 3
-        binding.seekBarQualityDiscrete.visibility = View.GONE
+        binding.seekBarQualityDiscrete.apply {
+            max = 1
+            progress = 2
+            visibility = View.INVISIBLE
+        }
 
         val compressionMethods: Array<String> = resources.getStringArray(R.array.compressionMethods)
         val adapterCompressionMethods: ArrayAdapter<String> =
@@ -64,35 +68,30 @@ class CompressionSelectionFragment : Fragment() {
 
         val viewModel: ViewModel by activityViewModels()
 
-        val set = ConstraintSet()
-        set.clone(binding.ConstraintLayout)
-
         binding.spinnerCompressionMethod.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parentView: AdapterView<*>?) { }
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 viewModel.changeCompression(binding.spinnerCompressionMethod.selectedItem.toString())
 
-                if (binding.spinnerCompressionMethod.selectedItem.toString() == "Luban") {
-                    set.connect(
-                        binding.editTextQuality.id, ConstraintSet.START,
-                        binding.seekBarQualityDiscrete.id, ConstraintSet.END, 10.toPixels()
-                    )
-                    set.applyTo(binding.ConstraintLayout)
-                    binding.seekBarQualityDiscrete.visibility = View.VISIBLE
-                    binding.seekBarQualityContinuous.visibility = View.GONE
+                when (binding.spinnerCompressionMethod.selectedItem.toString()) {
+                    "Luban" -> {
+                        enableQuality(true)
+                        binding.seekBarQualityDiscrete.visibility = View.VISIBLE
+                        binding.seekBarQualityContinuous.visibility = View.INVISIBLE
 
-                    binding.editTextQuality.setText(binding.seekBarQualityDiscrete.progress.toString())
-                } else {
-                    set.connect(
-                        binding.editTextQuality.id, ConstraintSet.START,
-                        binding.seekBarQualityContinuous.id, ConstraintSet.END, 10.toPixels()
-                    )
-                    set.applyTo(binding.ConstraintLayout)
-                    binding.seekBarQualityDiscrete.visibility = View.GONE
-                    binding.seekBarQualityContinuous.visibility = View.VISIBLE
+                        binding.editTextQuality.setText(binding.seekBarQualityDiscrete.progress.toString())
+                    }
+                    "Original" -> {
+                        enableQuality(false)
+                    }
+                    else -> {
+                        enableQuality(true)
+                        binding.seekBarQualityDiscrete.visibility = View.INVISIBLE
+                        binding.seekBarQualityContinuous.visibility = View.VISIBLE
 
-                    binding.editTextQuality.setText(binding.seekBarQualityContinuous.progress.toString())
+                        binding.editTextQuality.setText(binding.seekBarQualityContinuous.progress.toString())
+                    }
                 }
             }
         }
@@ -101,8 +100,13 @@ class CompressionSelectionFragment : Fragment() {
             override fun onStopTrackingTouch(seekBar: SeekBar) { }
             override fun onStartTrackingTouch(seekBar: SeekBar) { }
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                binding.editTextQuality.setText(progress.toString())
-                viewModel.changeQuality(progress)
+                if (binding.spinnerCompressionMethod.selectedItem.toString() == "Luban") {
+                    binding.editTextQuality.setText((progress + 1).toString())
+                    viewModel.changeQuality(progress)
+                } else {
+                    binding.editTextQuality.setText(progress.toString())
+                    viewModel.changeQuality(progress)
+                }
             }
         }
 
@@ -114,12 +118,24 @@ class CompressionSelectionFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val beforeProgress = binding.editTextQuality.text.toString().toIntOrNull()
-                when (beforeProgress) {
-                    null -> binding.seekBarQualityDiscrete.progress = 0
-                    in 0..100 ->
-                        binding.seekBarQualityDiscrete.progress =
-                            binding.editTextQuality.text.toString().toInt()
-                    else -> binding.seekBarQualityDiscrete.progress = 100
+
+                if (binding.spinnerCompressionMethod.selectedItem.toString() == "Luban") {
+                    when (beforeProgress) {
+                        null -> binding.seekBarQualityDiscrete.progress = 0
+                        in 0..1 ->
+                            binding.seekBarQualityDiscrete.progress =
+                                binding.editTextQuality.text.toString().toInt() - 1
+                        else -> binding.seekBarQualityDiscrete.progress = 1
+                    }
+                } else {
+                    when (beforeProgress) {
+                        null -> binding.seekBarQualityContinuous.progress = 0
+                        in 0..100 ->
+                            binding.seekBarQualityContinuous.progress =
+                                binding.editTextQuality.text.toString().toInt()
+                        else -> binding.seekBarQualityContinuous.progress = 100
+                    }
+
                 }
 
                 viewModel.changeQuality(beforeProgress ?: 0)
@@ -131,8 +147,16 @@ class CompressionSelectionFragment : Fragment() {
         return view
     }
 
+    private fun enableQuality(enabled: Boolean) {
+        binding.apply {
+            seekBarQualityDiscrete.isEnabled = enabled
+            seekBarQualityContinuous.isEnabled = enabled
+
+            editTextQuality.isEnabled = enabled
+        }
+    }
     private fun Int.toPixels(): Int {
-        val scale = context?.resources?.displayMetrics?.density ?: 0f
+        val scale = requireContext().resources?.displayMetrics?.density ?: 0f
         //Converts from dp/sp to pixels
         return (this * scale + 0.5).toInt()
     }

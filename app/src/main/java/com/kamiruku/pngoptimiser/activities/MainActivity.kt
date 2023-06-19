@@ -198,7 +198,7 @@ class MainActivity : AppCompatActivity() {
                         formatBytes(newFile?.length() ?: 0)
                     )
                 newFile?.delete()
-                //file.delete()
+                file.delete()
             }
         }
     }
