@@ -13,6 +13,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -192,6 +193,13 @@ class MainActivity : AppCompatActivity() {
                     else -> null
                 }
                 val newFile = compressionType?.compress(file, quality, applicationContext)
+
+                if (newFile == null || newFile.length() == 0L)
+                    Toast.makeText(
+                        applicationContext,
+                        "An error has occured. Please check the stack trace for more information.",
+                        Toast.LENGTH_SHORT).show()
+
                 binding.textViewAfterSize.text =
                     getString(
                         R.string.compressed_image_size,

@@ -60,7 +60,7 @@ class PNGQuant: CompressionLogic {
             return null
         }
 
-        Log.i("PNGQuant", "File: ${file.name} \n Quality: $quality")
+        Log.i("PNGQuant", "File: ${file.name} \t Quality: $quality")
 
         val pngQuant = LibPngQuant()
         val newFile = File(context.cacheDir, file.name)
@@ -79,7 +79,7 @@ class LubanCompress: CompressionLogic {
             else -> Luban.THIRD_GEAR
         }
 
-        Log.i("Luban", "File: ${file.name} \n Quality: $quality")
+        Log.i("Luban", "File: ${file.name} \t Quality: $quality")
 
         Luban.compress(file, context.cacheDir)
             .putGear(gear)
@@ -87,7 +87,7 @@ class LubanCompress: CompressionLogic {
             .launch(
                 object: OnCompressListener {
                     override fun onStart() {
-                        println("Luban: ${file.name} has started.")
+                        Log.i("Luban", "${file.name} has started.")
                     }
 
                     override fun onSuccess(file: File?) {
