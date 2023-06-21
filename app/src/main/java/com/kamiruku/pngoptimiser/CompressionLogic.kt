@@ -96,7 +96,7 @@ class LubanCompress: CompressionLogic {
 
                     override fun onError(e: Throwable?) {
                         e?.printStackTrace()
-                        Toast.makeText(context, "An error has occured. Check stack trace for more information.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "An error has occurred. Check stack trace for more information.", Toast.LENGTH_SHORT).show()
                         deferred.complete(null)
                     }
                 }

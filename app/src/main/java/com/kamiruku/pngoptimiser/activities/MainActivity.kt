@@ -2,12 +2,18 @@ package com.kamiruku.pngoptimiser.activities
 
 import android.app.Activity
 import android.content.ClipData
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
@@ -16,9 +22,12 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
@@ -192,21 +201,31 @@ class MainActivity : AppCompatActivity() {
                     "Luban" -> LubanCompress()
                     else -> null
                 }
-                val newFile = compressionType?.compress(file, quality, applicationContext)
 
-                if (newFile == null || newFile.length() == 0L)
-                    Toast.makeText(
-                        applicationContext,
-                        "An error has occured. Please check the stack trace for more information.",
-                        Toast.LENGTH_SHORT).show()
+                val cachedFile = compressionType?.compress(file, quality, applicationContext)
+
+                if (cachedFile == null || cachedFile.length() == 0L)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            applicationContext,
+                            "An error has occurred. Please check the stack trace for more information.",
+                            Toast.LENGTH_SHORT).show()
+                    }
+
+                val bitmapFormat = when (cachedFile?.extension) {
+                    "jpg" -> Bitmap.CompressFormat.JPEG
+                    "png" -> Bitmap.CompressFormat.PNG
+                    else -> Bitmap.CompressFormat.JPEG
+                }
 
                 binding.textViewAfterSize.text =
                     getString(
                         R.string.compressed_image_size,
-                        formatBytes(newFile?.length() ?: 0)
+                        formatBytes(cachedFile?.length() ?: 0)
                     )
-                newFile?.delete()
+                //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
                 file.delete()
+                cachedFile?.delete()
             }
         }
     }
@@ -219,6 +238,71 @@ class MainActivity : AppCompatActivity() {
         val scale = applicationContext.resources.displayMetrics.density
         //Converts from dp/sp to pixels
         return (this * scale + 0.5).toInt()
+    }
+
+    private fun saveToExternalStorage(src: File) {
+        val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
+        val rootDir = File(root)
+        if (!rootDir.exists()) rootDir.mkdir()
+
+        val storageDir = File(root + File.separator + "pngoptimiser")
+        if (!storageDir.exists()) storageDir.mkdir()
+
+        val dst = File(storageDir, src.name)
+
+        try {
+            FileInputStream(src).use { `in` ->
+                FileOutputStream(dst).use { out ->
+                    // Transfer bytes from in to out
+                    val buf = ByteArray(1024)
+                    var len: Int
+                    while (`in`.read(buf).also { len = it } > 0) {
+                        out.write(buf, 0, len)
+                    }
+                }
+            }
+        }
+
+        catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveToExternalStorage(file: File, format: Bitmap.CompressFormat) {
+        val values: ContentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + "pngoptimiser")
+        }
+
+        val resolver = contentResolver
+        var uri: Uri? = null
+
+        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+
+        try {
+            uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                ?: throw IOException("Failed to create a new MediaStore record.")
+            resolver.openOutputStream(uri)?.use {
+                if (!bitmap.compress(format, 100, it))
+                    throw IOException("Failed to save bitmap.")
+            } ?: throw IOException("Failed to open output stream.")
+        }
+
+        catch (ex: Exception) {
+            ex.printStackTrace()
+            uri?.let {
+                // Don't leave an orphan entry in the MediaStore
+                resolver.delete(it, null, null)
+            }
+        }
+
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
     }
 
     @Throws(IOException::class)

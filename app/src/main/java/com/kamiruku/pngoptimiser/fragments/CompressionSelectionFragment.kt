@@ -152,7 +152,7 @@ class CompressionSelectionFragment : Fragment() {
                     }
 
                 }
-                
+
                 viewModel.changeQuality(progress ?: 0)
                 //Puts cursor at *end* of edit text
                 binding.editTextQuality.setSelection(binding.editTextQuality.text.length)
