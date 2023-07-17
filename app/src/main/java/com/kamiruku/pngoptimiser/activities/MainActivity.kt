@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedUri: Uri? = null
 
     init {
-        //Night mode before screen starts
+        //If put in MainActivity's onCreate, the screen would flash white then black if the device's default colour was light.
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
     }
 
@@ -56,6 +56,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+        checkPermissions()
 
         val aUtils = ActivityUtils()
         aUtils.hideDecor(window)
@@ -113,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                     AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner_open)
                 //Allows fragment to be hidden
                 settingsFragIsOpen = true
-                println("Fragment popup.")
+                println("Fragment popup opened.")
             }
         }
 
@@ -136,16 +138,14 @@ class MainActivity : AppCompatActivity() {
                     AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner)
                 //Allows fragment to be shown again
                 settingsFragIsOpen = false
-                println("Fragment popup close.")
+                println("Fragment popup closed.")
 
-                if (selectedUri != null) {
-                    if (compressType != viewModel.selectedCompression.value || quality != viewModel.selectedQuality.value) {
-                        //A check is done to see if the user has changed the compression type or the quality
-                        compressType = viewModel.selectedCompression.value ?: ""
-                        quality = viewModel.selectedQuality.value ?: 0
+                if (compressType != viewModel.selectedCompression.value || quality != viewModel.selectedQuality.value) {
+                    //A check is done to see if the user has changed the compression type or the quality
+                    compressType = viewModel.selectedCompression.value ?: ""
+                    quality = viewModel.selectedQuality.value ?: 0
 
-                        managesImage(selectedUri ?: Uri.EMPTY, compressType, quality)
-                    }
+                    managesImage(selectedUri ?: Uri.EMPTY, compressType, quality)
                 }
             }
         }
@@ -181,6 +181,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun managesImage(imageUri: Uri, compressType: String, quality: Int) {
+        if (imageUri == Uri.EMPTY) return
+
         //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
         binding.textViewBeforeSize.text =
@@ -241,6 +243,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveToExternalStorage(src: File) {
+        checkPermissions()
+
         val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
         val rootDir = File(root)
         if (!rootDir.exists()) rootDir.mkdir()
@@ -270,6 +274,8 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun saveToExternalStorage(file: File, format: Bitmap.CompressFormat) {
+        checkPermissions()
+
         val values: ContentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/")
