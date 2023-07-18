@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: ViewModel by viewModels()
     private var selectedUri: Uri? = null
+    private var cachedConverted: File? = null
 
     init {
         //If put in MainActivity's onCreate, the screen would flash white then black if the device's default colour was light.
@@ -116,6 +117,24 @@ class MainActivity : AppCompatActivity() {
                 //Allows fragment to be hidden
                 settingsFragIsOpen = true
                 println("Fragment popup opened.")
+            }
+        }
+
+        binding.textViewAfterSize.setOnClickListener {
+            if (cachedConverted != null && cachedConverted?.exists() !!) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    saveToExternalStorage(cachedConverted !!, cachedConverted?.extension ?: "")
+                 else
+                     saveToExternalStorage(cachedConverted !!)
+
+                Toast.makeText(
+                    applicationContext,
+                  "File has been saved to Pictures/PNGOptimiser.",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                cachedConverted?.delete()
+                cachedConverted = null
             }
         }
 
@@ -206,28 +225,25 @@ class MainActivity : AppCompatActivity() {
 
                 val cachedFile = compressionType?.compress(file, quality, applicationContext)
 
-                if (cachedFile == null || cachedFile.length() == 0L)
+                if (cachedFile == null || cachedFile.length() == 0L) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             applicationContext,
                             "An error has occurred. Please check the stack trace for more information.",
                             Toast.LENGTH_SHORT).show()
                     }
-
-                val bitmapFormat = when (cachedFile?.extension) {
-                    "jpg" -> Bitmap.CompressFormat.JPEG
-                    "png" -> Bitmap.CompressFormat.PNG
-                    else -> Bitmap.CompressFormat.JPEG
+                    return@withContext
                 }
 
                 binding.textViewAfterSize.text =
                     getString(
                         R.string.compressed_image_size,
-                        formatBytes(cachedFile?.length() ?: 0)
+                        formatBytes(cachedFile.length())
                     )
                 //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
                 file.delete()
-                cachedFile?.delete()
+
+                cachedConverted = cachedFile
             }
         }
     }
@@ -236,14 +252,15 @@ class MainActivity : AppCompatActivity() {
         return android.text.format.Formatter.formatFileSize(applicationContext, bytes)
     }
 
-    private fun Int.toPixels(): Int {
-        val scale = applicationContext.resources.displayMetrics.density
-        //Converts from dp/sp to pixels
-        return (this * scale + 0.5).toInt()
-    }
-
     private fun saveToExternalStorage(src: File) {
-        checkPermissions()
+        //Check permissions again before saving because user can revoke permissions whilst app is open
+        if (!checkPermissions()) {
+            Toast.makeText(
+                applicationContext,
+                "You have not granted read - write access to your external storage.",
+                Toast.LENGTH_LONG)
+                .show()
+        }
 
         val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
         val rootDir = File(root)
@@ -273,13 +290,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private fun saveToExternalStorage(file: File, format: Bitmap.CompressFormat) {
-        checkPermissions()
+    private fun saveToExternalStorage(file: File, format: String) {
+        //Check permissions again before saving because user can revoke permissions whilst app is open
+        if (!checkPermissions()) {
+            Toast.makeText(
+                applicationContext,
+                "You have not granted read - write access to your external storage.",
+               Toast.LENGTH_LONG)
+                .show()
+            return
+        }
 
         val values: ContentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/")
             put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + "pngoptimiser")
+        }
+
+        val compressFormat = when (format) {
+            "jpg" -> Bitmap.CompressFormat.JPEG
+            "png" -> Bitmap.CompressFormat.PNG
+            else -> Bitmap.CompressFormat.JPEG
         }
 
         val resolver = contentResolver
@@ -291,7 +322,7 @@ class MainActivity : AppCompatActivity() {
             uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                 ?: throw IOException("Failed to create a new MediaStore record.")
             resolver.openOutputStream(uri)?.use {
-                if (!bitmap.compress(format, 100, it))
+                if (!bitmap.compress(compressFormat, 100, it))
                     throw IOException("Failed to save bitmap.")
             } ?: throw IOException("Failed to open output stream.")
         }
@@ -306,9 +337,10 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun checkPermissions() {
+    private fun checkPermissions(): Boolean {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+        return (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) == PackageManager.PERMISSION_GRANTED
     }
 
     @Throws(IOException::class)
