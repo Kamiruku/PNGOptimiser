@@ -122,19 +122,27 @@ class MainActivity : AppCompatActivity() {
 
         binding.textViewAfterSize.setOnClickListener {
             if (cachedConverted != null && cachedConverted?.exists() !!) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                val success = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     saveToExternalStorage(cachedConverted !!, cachedConverted?.extension ?: "")
-                 else
-                     saveToExternalStorage(cachedConverted !!)
+                else
+                    saveToExternalStorage(cachedConverted !!)
 
-                Toast.makeText(
-                    applicationContext,
-                  "File has been saved to Pictures/PNGOptimiser.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (success) {
+                    Toast.makeText(
+                        applicationContext,
+                        "File has been saved to Pictures/PNGOptimiser.",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
-                cachedConverted?.delete()
-                cachedConverted = null
+                    cachedConverted?.delete()
+                    cachedConverted = null
+                } else {
+                    Toast.makeText(
+                        applicationContext,
+                        "An error has occurred when saving the file. Please check the stacktrace for more information.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
 
@@ -201,9 +209,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun managesImage(imageUri: Uri, compressType: String, quality: Int) {
         if (imageUri == Uri.EMPTY) return
-
+        //Check cached file existence and deletes it then set to null
         if (cachedConverted?.exists() == true || cachedConverted != null)
-            cachedConverted?.delete()
+            cachedConverted?.delete().also { cachedConverted = null }
 
         //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
@@ -214,45 +222,53 @@ class MainActivity : AppCompatActivity() {
             )
         //Display uncompressed image on image viewer
         binding.imageViewer.setImage(ImageSource.uri(imageUri))
-        //Compressing techniques should not be run on UI thread
-        lifecycleScope.launch(Dispatchers.Main) {
-            withContext(Dispatchers.IO) {
-                val compressionType = when (compressType) {
-                    "Original" -> OriginalFile()
-                    "Default JPG" -> DefaultJPG()
-                    "Default PNG" -> DefaultPNG()
-                    "PNGQuant (Lossy)" -> PNGQuant()
-                    "Luban" -> LubanCompress()
-                    else -> null
-                }
 
-                val cachedFile = compressionType?.compress(file, quality, applicationContext)
+        val compressionType = when (compressType) {
+            "Original" -> OriginalFile()
+            "Default JPG" -> DefaultJPG()
+            "Default PNG" -> DefaultPNG()
+            "PNGQuant (Lossy)" -> PNGQuant()
+            "Luban" -> LubanCompress()
+            else -> null
+        }
 
-                if (cachedFile == null || cachedFile.length() == 0L) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            applicationContext,
-                            "An error has occurred. Please check the stack trace for more information.",
-                            Toast.LENGTH_SHORT).show()
-                    }
-                    return@withContext
-                }
+        var cachedFile: File? = null
 
+        val compressJob = lifecycleScope.launch(Dispatchers.IO) {
+            cachedFile = compressionType?.compress(file, quality, applicationContext)
+
+            if (cachedFile == file)
+                return@launch
+
+            if ((cachedFile == null) || (cachedFile?.length() == 0L)) {
                 withContext(Dispatchers.Main) {
-                    binding.imageViewer.setImage(ImageSource.uri(cachedFile.absolutePath))
-
-                    binding.textViewAfterSize.text =
-                        getString(
-                            R.string.compressed_image_size,
-                            formatBytes(cachedFile.length())
-                        )
+                    Toast.makeText(
+                        applicationContext,
+                        "An error has occurred. Please check the stack trace for more information.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-
-                //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
-                file.delete()
-
-                cachedConverted = cachedFile
+                return@launch
             }
+        }
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            //Wait for compress job to finish
+            compressJob.join()
+
+            //Displays compressed file to the image viewer
+            binding.imageViewer.setImage(ImageSource.uri(cachedFile?.absolutePath ?: ""))
+            //Shows compressed file size
+            binding.textViewAfterSize.text =
+                getString(
+                    R.string.compressed_image_size,
+                    formatBytes(cachedFile?.length() ?: 0L)
+                )
+
+            //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
+            file.delete()
+            //Cached file does not need to be deleted because user may want to save it
+            cachedConverted = cachedFile
         }
     }
 
@@ -260,7 +276,7 @@ class MainActivity : AppCompatActivity() {
         return android.text.format.Formatter.formatFileSize(applicationContext, bytes)
     }
 
-    private fun saveToExternalStorage(src: File) {
+    private fun saveToExternalStorage(src: File): Boolean {
         //Check permissions again before saving because user can revoke permissions whilst app is open
         if (!checkPermissions()) {
             Toast.makeText(
@@ -268,7 +284,7 @@ class MainActivity : AppCompatActivity() {
                 "You have not granted read - write access to your external storage.",
                 Toast.LENGTH_LONG)
                 .show()
-            return
+            return false
         }
 
         val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
@@ -295,11 +311,14 @@ class MainActivity : AppCompatActivity() {
 
         catch (ex: Exception) {
             ex.printStackTrace()
+            return false
         }
+
+        return true
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private fun saveToExternalStorage(file: File, format: String) {
+    private fun saveToExternalStorage(file: File, format: String): Boolean {
         //Check permissions again before saving because user can revoke permissions whilst app is open
         if (!checkPermissions()) {
             Toast.makeText(
@@ -307,7 +326,7 @@ class MainActivity : AppCompatActivity() {
                 "You have not granted read - write access to your external storage.",
                Toast.LENGTH_LONG)
                 .show()
-            return
+            return false
         }
 
         val values: ContentValues = ContentValues().apply {
@@ -342,8 +361,9 @@ class MainActivity : AppCompatActivity() {
                 // Don't leave an orphan entry in the MediaStore
                 resolver.delete(it, null, null)
             }
+            return false
         }
-
+        return true
     }
 
     private fun checkPermissions(): Boolean {

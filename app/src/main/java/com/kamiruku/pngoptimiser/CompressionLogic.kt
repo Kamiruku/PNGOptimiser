@@ -58,12 +58,12 @@ class DefaultPNG: CompressionLogic {
 }
 
 class PNGQuant: CompressionLogic {
-    override suspend fun compress(file: File, quality: Int, context: Context): File? {
+    override suspend fun compress(file: File, quality: Int, context: Context): File {
         if (file.extension != "png") {
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "Compressing non-PNG files is not allowed!", Toast.LENGTH_SHORT).show()
             }
-            return null
+            return file
         }
 
         Log.i("PNGQuant", "File: ${file.name} \t Quality: $quality")
