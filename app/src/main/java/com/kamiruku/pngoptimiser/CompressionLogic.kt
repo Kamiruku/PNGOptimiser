@@ -23,9 +23,15 @@ interface CompressionLogic {
 
 class OriginalFile: CompressionLogic {
     override suspend fun compress(file: File, quality: Int, context: Context): File {
+        val deferred = CompletableDeferred<File>()
+
         val newFile = File(context.cacheDir, file.name)
+        if (newFile.exists())
+            newFile.delete()
         file.copyTo(newFile)
-        return newFile
+
+        deferred.complete(newFile)
+        return deferred.await()
     }
 }
 
@@ -65,6 +71,7 @@ class PNGQuant: CompressionLogic {
         val pngQuant = LibPngQuant()
         val newFile = File(context.cacheDir, file.name)
         pngQuant.pngQuantFile(file, newFile, max(quality - 10, 0), min(quality + 10, 100))
+
         return newFile
     }
 }

@@ -202,6 +202,9 @@ class MainActivity : AppCompatActivity() {
     private fun managesImage(imageUri: Uri, compressType: String, quality: Int) {
         if (imageUri == Uri.EMPTY) return
 
+        if (cachedConverted?.exists() == true || cachedConverted != null)
+            cachedConverted?.delete()
+
         //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
         binding.textViewBeforeSize.text =
@@ -235,11 +238,16 @@ class MainActivity : AppCompatActivity() {
                     return@withContext
                 }
 
-                binding.textViewAfterSize.text =
-                    getString(
-                        R.string.compressed_image_size,
-                        formatBytes(cachedFile.length())
-                    )
+                withContext(Dispatchers.Main) {
+                    binding.imageViewer.setImage(ImageSource.uri(cachedFile.absolutePath))
+
+                    binding.textViewAfterSize.text =
+                        getString(
+                            R.string.compressed_image_size,
+                            formatBytes(cachedFile.length())
+                        )
+                }
+
                 //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
                 file.delete()
 
@@ -260,6 +268,7 @@ class MainActivity : AppCompatActivity() {
                 "You have not granted read - write access to your external storage.",
                 Toast.LENGTH_LONG)
                 .show()
+            return
         }
 
         val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
