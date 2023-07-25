@@ -83,7 +83,6 @@
         android:ems="10"
         android:inputType="numberSigned"
         android:maxLength="3"
-        android:text="100"
         android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@+id/seek_bar_quality_continuous"
         app:layout_constraintTop_toBottomOf="@+id/label_compression_quality" />

@@ -51,7 +51,8 @@ class CompressionSelectionFragment : Fragment() {
         binding.shapeableImageView.strokeColor =
             ColorStateList.valueOf(requireContext().getColor(R.color.white))
         //Sets progress of continuous seekbar to max - only on main activity oncreate
-        binding.seekBarQualityContinuous.progress = binding.seekBarQualityContinuous.max
+        binding.seekBarQualityContinuous.progress = binding.seekBarQualityContinuous.max * 8 / 10
+        binding.editTextQuality.setText(binding.seekBarQualityContinuous.progress.toString())
         //Sets attribute of discrete seekbar - max is amount of luban options - 1
         binding.seekBarQualityDiscrete.apply {
             max = 1
@@ -85,10 +86,12 @@ class CompressionSelectionFragment : Fragment() {
                         binding.seekBarQualityContinuous.visibility = View.INVISIBLE
 
                         binding.editTextQuality.setText(binding.seekBarQualityDiscrete.progress.toString())
+                        binding.textViewPercentage.visibility = View.INVISIBLE
                     }
                     "Original" -> {
                         //No point in showing quality since it won't do anything
                         enableQualityToggle(false)
+                        binding.textViewPercentage.visibility = View.VISIBLE
                     }
                     else -> {
                         //Every other compression method uses a continuious seekbar
@@ -97,6 +100,7 @@ class CompressionSelectionFragment : Fragment() {
                         binding.seekBarQualityContinuous.visibility = View.VISIBLE
 
                         binding.editTextQuality.setText(binding.seekBarQualityContinuous.progress.toString())
+                        binding.textViewPercentage.visibility = View.VISIBLE
                     }
                 }
             }

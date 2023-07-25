@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             getResult.launch(intent)
         }
+        binding.progressBar.visibility = View.INVISIBLE
 
         val sfm = supportFragmentManager
         var settingsFragIsOpen: Boolean = false
@@ -235,23 +236,30 @@ class MainActivity : AppCompatActivity() {
         var cachedFile: File? = null
 
         val compressJob = lifecycleScope.launch(Dispatchers.IO) {
+            binding.progressBar.visibility = View.VISIBLE
             cachedFile = compressionType?.compress(file, quality, applicationContext)
 
-            if (cachedFile == file)
+            //Only occurs for pngquant errors
+            if (cachedFile == file) {
+                binding.progressBar.visibility = View.INVISIBLE
                 return@launch
+            }
 
             if ((cachedFile == null) || (cachedFile?.length() == 0L)) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         applicationContext,
-                        "An error has occurred. Please check the stack trace for more information.",
+                        "An error has occurred. Please check the stack trace for more information or retry with a lower quality setting.",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+                binding.progressBar.visibility = View.INVISIBLE
                 return@launch
             }
+            binding.progressBar.visibility = View.INVISIBLE
         }
 
+        //Launch on main thread for UI changes
         lifecycleScope.launch(Dispatchers.Main) {
             //Wait for compress job to finish
             compressJob.join()
@@ -264,7 +272,6 @@ class MainActivity : AppCompatActivity() {
                     R.string.compressed_image_size,
                     formatBytes(cachedFile?.length() ?: 0L)
                 )
-
             //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
             file.delete()
             //Cached file does not need to be deleted because user may want to save it
