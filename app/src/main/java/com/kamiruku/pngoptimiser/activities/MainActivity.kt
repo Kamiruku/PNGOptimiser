@@ -32,6 +32,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.davemorrissey.labs.subscaleview.ImageSource
+import com.google.android.material.tabs.TabLayout.TabLayoutOnPageChangeListener
 import com.kamiruku.pngoptimiser.*
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import com.kamiruku.pngoptimiser.fragments.CompressionSelectionFragment
@@ -72,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.buttonBrowseImages.setOnClickListener {
             val intent: Intent
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 //Android 13
                 intent = Intent(MediaStore.ACTION_PICK_IMAGES)
             else {
@@ -86,8 +87,8 @@ class MainActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.INVISIBLE
 
         val sfm = supportFragmentManager
-        var settingsFragIsOpen: Boolean = false
-        val frag: CompressionSelectionFragment = CompressionSelectionFragment()
+        var settingsFragIsOpen = false
+        val frag = CompressionSelectionFragment()
 
         sfm.beginTransaction()
             .add(R.id.fragment_container_view, frag)
@@ -147,8 +148,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        var compressType: String = "Original"
-        var quality: Int = 0
+        var compressType = "Original"
+        var quality  = 0
 
         binding.viewDetectOptionExit.setOnClickListener {
             if (settingsFragIsOpen) {
@@ -176,6 +177,18 @@ class MainActivity : AppCompatActivity() {
                     managesImage(selectedUri ?: Uri.EMPTY, compressType, quality)
                 }
             }
+        }
+
+        binding.tabLayout.post {
+            binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Before"))
+            binding.tabLayout.addTab(binding.tabLayout.newTab().setText("After"))
+
+            val adapter = ImagePagerAdapter(this, supportFragmentManager, 2)
+            binding.viewPager.adapter = adapter
+
+            binding.viewPager.addOnPageChangeListener(TabLayoutOnPageChangeListener(binding.tabLayout))
+            binding.viewPager.offscreenPageLimit = 2
+            binding.tabLayout.setupWithViewPager(binding.viewPager)
         }
     }
 
