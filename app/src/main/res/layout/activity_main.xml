@@ -7,16 +7,14 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
-    <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-        android:id="@+id/image_viewer"
-        android:layout_width="350dp"
-        android:layout_height="350dp"
-        android:background="@drawable/image_border"
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.100000024" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progress_bar"
@@ -28,20 +26,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_view_after_size" />
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/view_pager"
+    <LinearLayout
+        android:id="@+id/linear_layout"
         android:layout_width="350dp"
-        android:layout_height="350dp"
-        android:layout_marginTop="30dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/view_detect_option_exit" >
+        app:layout_constraintTop_toTopOf="@+id/view_detect_option_exit">
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"
-            android:layout_width="350dp"
-            android:layout_height="wrap_content" />
-    </androidx.viewpager.widget.ViewPager>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/view_pager_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/text_view_before_size"
@@ -59,9 +64,9 @@
 
     <TextView
         android:id="@+id/text_view_after_size"
-        android:layout_centerVertical="true"
-        android:layout_height="36sp"
         android:layout_width="350sp"
+        android:layout_height="36sp"
+        android:layout_centerVertical="true"
         android:layout_marginTop="20dp"
         android:background="@drawable/rounded_corner"
         android:text="@string/compress"
@@ -72,7 +77,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.50"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/image_viewer" />
+        app:layout_constraintTop_toBottomOf="@+id/linear_layout" />
 
     <Button
         android:id="@+id/button_browse_images"
@@ -96,7 +101,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="0.0" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container_view"

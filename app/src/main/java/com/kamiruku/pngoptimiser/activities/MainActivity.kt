@@ -28,14 +28,20 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import com.davemorrissey.labs.subscaleview.ImageSource
-import com.google.android.material.tabs.TabLayout.TabLayoutOnPageChangeListener
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.kamiruku.pngoptimiser.*
 import com.kamiruku.pngoptimiser.databinding.ActivityMainBinding
 import com.kamiruku.pngoptimiser.fragments.CompressionSelectionFragment
+import com.kamiruku.pngoptimiser.fragments.DisplayImagesFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -179,16 +185,40 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.tabLayout.post {
-            binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Before"))
-            binding.tabLayout.addTab(binding.tabLayout.newTab().setText("After"))
+        val adapter = ViewStateAdapter(sfm, lifecycle)
+        binding.viewPager2.adapter = adapter
 
-            val adapter = ImagePagerAdapter(this, supportFragmentManager, 2)
-            binding.viewPager.adapter = adapter
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Before"))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("After"))
 
-            binding.viewPager.addOnPageChangeListener(TabLayoutOnPageChangeListener(binding.tabLayout))
-            binding.viewPager.offscreenPageLimit = 2
-            binding.tabLayout.setupWithViewPager(binding.viewPager)
+        binding.tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                binding.viewPager2.currentItem = tab.position
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
+
+        binding.viewPager2.registerOnPageChangeCallback(object : OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                binding.tabLayout.selectTab(binding.tabLayout.getTabAt(position))
+            }
+        })
+    }
+
+    class ViewStateAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle):
+        FragmentStateAdapter(fragmentManager, lifecycle) {
+        override fun createFragment(position: Int): Fragment {
+            // Hardcoded in this order, you'll want to use lists and make sure the titles match
+            return if (position == 0) {
+                DisplayImagesFragment()
+            } else DisplayImagesFragment()
+        }
+
+        override fun getItemCount(): Int {
+            // Hardcoded, use lists
+            return 2
         }
     }
 
@@ -235,7 +265,7 @@ class MainActivity : AppCompatActivity() {
                 formatBytes(file.length())
             )
         //Display uncompressed image on image viewer
-        binding.imageViewer.setImage(ImageSource.uri(imageUri))
+        //binding.imageViewer.setImage(ImageSource.uri(imageUri))
 
         val compressionType = when (compressType) {
             "Original" -> OriginalFile()
@@ -254,7 +284,9 @@ class MainActivity : AppCompatActivity() {
 
             //Only occurs for pngquant errors
             if (cachedFile == file) {
-                binding.progressBar.visibility = View.INVISIBLE
+                withContext(Dispatchers.Main) {
+                    binding.progressBar.visibility = View.INVISIBLE
+                }
                 return@launch
             }
 
@@ -265,9 +297,12 @@ class MainActivity : AppCompatActivity() {
                         "An error has occurred. Please check the stack trace for more information or retry with a lower quality setting.",
                         Toast.LENGTH_SHORT
                     ).show()
+                    binding.progressBar.visibility = View.INVISIBLE
                 }
-                binding.progressBar.visibility = View.INVISIBLE
                 return@launch
+            }
+            withContext(Dispatchers.Main) {
+                binding.progressBar.visibility = View.INVISIBLE
             }
             binding.progressBar.visibility = View.INVISIBLE
         }
@@ -278,7 +313,7 @@ class MainActivity : AppCompatActivity() {
             compressJob.join()
 
             //Displays compressed file to the image viewer
-            binding.imageViewer.setImage(ImageSource.uri(cachedFile?.absolutePath ?: ""))
+            //binding.imageViewer.setImage(ImageSource.uri(cachedFile?.absolutePath ?: ""))
             //Shows compressed file size
             binding.textViewAfterSize.text =
                 getString(
