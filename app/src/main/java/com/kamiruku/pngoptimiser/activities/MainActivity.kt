@@ -185,7 +185,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val adapter = ViewStateAdapter(sfm, lifecycle)
+        val fragments = arrayOf(DisplayImagesFragment(), DisplayImagesFragment())
+        val adapter = ViewStateAdapter(sfm, fragments, lifecycle)
         binding.viewPager2.adapter = adapter
 
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Before"))
@@ -207,18 +208,26 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    class ViewStateAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle):
+    inner class ViewStateAdapter(fragmentManager: FragmentManager, private val arrayFragments: Array<DisplayImagesFragment>, lifecycle: Lifecycle):
         FragmentStateAdapter(fragmentManager, lifecycle) {
+
         override fun createFragment(position: Int): Fragment {
             // Hardcoded in this order, you'll want to use lists and make sure the titles match
+            val args = Bundle()
+
             return if (position == 0) {
-                DisplayImagesFragment()
-            } else DisplayImagesFragment()
+                args.putString("IMAGE_URI", selectedUri.toString())
+                arrayFragments[position].arguments = args
+                arrayFragments[position]
+            } else {
+                args.putString("IMAGE_URL", Uri.fromFile(cachedConverted).toString())
+                arrayFragments[position].arguments = args
+                arrayFragments[position]
+            }
         }
 
         override fun getItemCount(): Int {
-            // Hardcoded, use lists
-            return 2
+            return arrayFragments.size
         }
     }
 
@@ -279,7 +288,9 @@ class MainActivity : AppCompatActivity() {
         var cachedFile: File? = null
 
         val compressJob = lifecycleScope.launch(Dispatchers.IO) {
-            binding.progressBar.visibility = View.VISIBLE
+            withContext(Dispatchers.Main) {
+                binding.progressBar.visibility = View.VISIBLE
+            }
             cachedFile = compressionType?.compress(file, quality, applicationContext)
 
             //Only occurs for pngquant errors
@@ -304,9 +315,7 @@ class MainActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.INVISIBLE
             }
-            binding.progressBar.visibility = View.INVISIBLE
         }
-
         //Launch on main thread for UI changes
         lifecycleScope.launch(Dispatchers.Main) {
             //Wait for compress job to finish
