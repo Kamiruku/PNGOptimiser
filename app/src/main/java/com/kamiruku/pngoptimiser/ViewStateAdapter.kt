@@ -11,7 +11,6 @@ class ViewStateAdapter(fragmentManager: FragmentManager, private val arrayFragme
     FragmentStateAdapter(fragmentManager, lifecycle) {
 
     override fun createFragment(position: Int): Fragment {
-        // Hardcoded in this order, you'll want to use lists and make sure the titles match
         val args = Bundle()
 
         return if (position == 0) {

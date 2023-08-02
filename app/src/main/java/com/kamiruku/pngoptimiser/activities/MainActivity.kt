@@ -78,13 +78,11 @@ class MainActivity : AppCompatActivity() {
             text = getString(R.string.browse_images)
         }
         binding.buttonBrowseImages.setOnClickListener {
-            val intent: Intent
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 //Android 13
-                intent = Intent(MediaStore.ACTION_PICK_IMAGES)
+                Intent(MediaStore.ACTION_PICK_IMAGES)
             else {
-                intent = Intent(Intent.ACTION_PICK)
-                    .apply { type = "image/*" }
+                Intent(Intent.ACTION_PICK).apply { type = "image/*" }
             }
             //Allows > 1 images to be selected
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
@@ -103,7 +101,7 @@ class MainActivity : AppCompatActivity() {
 
         //View is gone from layout - i.e does not have a clickable event
         binding.viewDetectOptionExit.visibility = View.GONE
-        //Centers text inside the image size textbox vertically
+        //Centers text inside the image size text box vertically
         binding.textViewBeforeSize.gravity = Gravity.CENTER_VERTICAL
         binding.textViewAfterSize.gravity = Gravity.CENTER_VERTICAL
 
@@ -243,14 +241,17 @@ class MainActivity : AppCompatActivity() {
         if (cachedConverted?.exists() == true || cachedConverted != null)
             cachedConverted?.delete().also { cachedConverted = null }
 
-        //Displays uncompressed image & uncompressed image size
         val file = getFile(applicationContext, imageUri)
+
+        //Sets uncompressed image file path & uncompressed image size
+        viewModel.beforePath.value = imageUri.toString()
         binding.textViewBeforeSize.text =
             getString(
                 R.string.actual_image_size,
                 formatBytes(file.length())
             )
-        viewModel.beforePath.value = imageUri.toString()
+        //Force slide to go to first tab
+        binding.tabLayout.getTabAt(0)?.select()
 
         val compressionType = when (compressType) {
             "Original" -> OriginalFile()
@@ -269,14 +270,14 @@ class MainActivity : AppCompatActivity() {
             }
             cachedFile = compressionType?.compress(file, quality, applicationContext)
 
-            //Only occurs for pngquant errors
+            //Handles pngquant non-png error
             if (cachedFile == file) {
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.INVISIBLE
                 }
                 return@launch
             }
-
+            //Display error message & force return
             if ((cachedFile == null) || (cachedFile?.length() == 0L)) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -288,26 +289,26 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@launch
             }
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.INVISIBLE
-            }
         }
+
         //Launch on main thread for UI changes
         lifecycleScope.launch(Dispatchers.Main) {
             //Wait for compress job to finish
             compressJob.join()
 
-            viewModel.afterPath.value = cachedFile?.path
+            binding.progressBar.visibility = View.INVISIBLE
             //Shows compressed file size
             binding.textViewAfterSize.text =
                 getString(
                     R.string.compressed_image_size,
                     formatBytes(cachedFile?.length() ?: 0L)
                 )
-            //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file
+            viewModel.afterPath.value = cachedFile?.path
+            //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file since we no longer need it
             file.delete()
-            //Cached file does not need to be deleted because user may want to save it
+            //CachedFile is not deleted because user can choose to save it
             cachedConverted = cachedFile
+            binding.tabLayout.getTabAt(1)?.select()
         }
     }
 
