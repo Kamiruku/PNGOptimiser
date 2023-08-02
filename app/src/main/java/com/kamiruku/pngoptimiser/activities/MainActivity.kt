@@ -208,29 +208,6 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    inner class ViewStateAdapter(fragmentManager: FragmentManager, private val arrayFragments: Array<DisplayImagesFragment>, lifecycle: Lifecycle):
-        FragmentStateAdapter(fragmentManager, lifecycle) {
-
-        override fun createFragment(position: Int): Fragment {
-            // Hardcoded in this order, you'll want to use lists and make sure the titles match
-            val args = Bundle()
-
-            return if (position == 0) {
-                args.putString("IMAGE_URI", selectedUri.toString())
-                arrayFragments[position].arguments = args
-                arrayFragments[position]
-            } else {
-                args.putString("IMAGE_URL", Uri.fromFile(cachedConverted).toString())
-                arrayFragments[position].arguments = args
-                arrayFragments[position]
-            }
-        }
-
-        override fun getItemCount(): Int {
-            return arrayFragments.size
-        }
-    }
-
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         //Receiver for image picker
         if (it.resultCode != Activity.RESULT_OK) return@registerForActivityResult
@@ -243,7 +220,7 @@ class MainActivity : AppCompatActivity() {
             selectedUri = imageUri
             managesImage(
                 imageUri,
-                viewModel.selectedCompression.value ?: "",
+                viewModel.selectedCompression.value ?: "Original",
                 viewModel.selectedQuality.value ?: 0
             )
         } else {
@@ -253,7 +230,7 @@ class MainActivity : AppCompatActivity() {
             if (imageUri != null) {
                 managesImage(
                     imageUri,
-                    viewModel.selectedCompression.value ?: "",
+                    viewModel.selectedCompression.value ?: "Original",
                     viewModel.selectedQuality.value ?: 0
                 )
             }
@@ -273,8 +250,7 @@ class MainActivity : AppCompatActivity() {
                 R.string.actual_image_size,
                 formatBytes(file.length())
             )
-        //Display uncompressed image on image viewer
-        //binding.imageViewer.setImage(ImageSource.uri(imageUri))
+        viewModel.beforePath.value = imageUri.toString()
 
         val compressionType = when (compressType) {
             "Original" -> OriginalFile()
@@ -321,8 +297,7 @@ class MainActivity : AppCompatActivity() {
             //Wait for compress job to finish
             compressJob.join()
 
-            //Displays compressed file to the image viewer
-            //binding.imageViewer.setImage(ImageSource.uri(cachedFile?.absolutePath ?: ""))
+            viewModel.afterPath.value = cachedFile?.path
             //Shows compressed file size
             binding.textViewAfterSize.text =
                 getString(
@@ -505,4 +480,7 @@ class ViewModel: androidx.lifecycle.ViewModel() {
     fun changeQuality(selected: Int) {
         mutableSelectedQuality.value = selected
     }
+
+    val beforePath = MutableLiveData<String>()
+    val afterPath = MutableLiveData<String>()
 }
