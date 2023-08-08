@@ -6,6 +6,7 @@
     <string name="actual_image_size">\u0020 Actual Size: %1$s</string>
 
     <string name="compress">\u0020Compress</string>
+    <string name="settings">\u0020Settings</string>
     <string name="quality">\u0020Quality</string>
     <string name="percentage">%</string>
 </resources>

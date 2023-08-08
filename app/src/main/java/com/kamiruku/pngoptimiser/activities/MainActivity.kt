@@ -28,6 +28,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
@@ -64,19 +65,20 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
+        //Check permissions on app start because user can revoke
         checkPermissions()
-
+        //Activity utility class for UI
         val aUtils = ActivityUtils()
         aUtils.hideDecor(window)
         aUtils.hideStatus(window)
 
-        //Curved Corners
+        //Curved Corners for buttons
         binding.buttonBrowseImages.apply {
             setBackgroundResource(R.drawable.button_background)
             setBackgroundColor(Color.parseColor("#80512DA8"))
             text = getString(R.string.browse_images)
         }
+        //Different android version need different intents for handling image picking
         binding.buttonBrowseImages.setOnClickListener {
             val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 //Android 13
@@ -84,16 +86,22 @@ class MainActivity : AppCompatActivity() {
             else {
                 Intent(Intent.ACTION_PICK).apply { type = "image/*" }
             }
-            //Allows > 1 images to be selected
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             getResult.launch(intent)
         }
+        //Sets progressBar initial visibility to invisible
         binding.progressBar.visibility = View.INVISIBLE
-
+        //Access support fragment manager in order to call/remove fragments
         val sfm = supportFragmentManager
+        //A check used for when 'Settings' fragment is open
         var settingsFragIsOpen = false
+        //Then initiate the settings fragment
         val frag = CompressionSelectionFragment()
-
+        /*
+            We are going to hide/show it on every transaction instead of adding and removing
+            because we want to retain the user's last settings in the view.
+            This means we only need one initial adding transaction,
+            but it is hidden on this initial addition.
+         */
         sfm.beginTransaction()
             .add(R.id.fragment_container_view, frag)
             .hide(frag)
@@ -105,9 +113,12 @@ class MainActivity : AppCompatActivity() {
         binding.textViewBeforeSize.gravity = Gravity.CENTER_VERTICAL
         binding.textViewAfterSize.gravity = Gravity.CENTER_VERTICAL
 
+        //Listener to open settings fragment
         binding.textViewBeforeSize.setOnClickListener {
+            //Check done whether setting frag is open so animations do not overlap
             if (!settingsFragIsOpen) {
-                //Need new fragment transaction per.. transaction
+                //Need new fragment transaction per.. transaction. Calling commit on previously used transaction will cause an 'IllegalStateException'
+                //This means although the fragment manager can be reused, fragment transaction needs to be created for every transaction.
                 val ft = sfm.beginTransaction()
                 //Sliding animation
                 ft.setCustomAnimations(
@@ -117,29 +128,32 @@ class MainActivity : AppCompatActivity() {
                 //Shows the actual fragment
                 ft.show(frag)
                     .commit()
+                //This needs to be visible when settings fragment is open because the fragment needs to close when user taps outside of it.
                 binding.viewDetectOptionExit.visibility = View.VISIBLE
+                //Originally, textVBS has 4 curved corners and when the fragments comes out, it looks weird. Then, the top is set to square to compensate.
                 binding.textViewBeforeSize.background =
                     AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner_open)
                 //Allows fragment to be hidden
                 settingsFragIsOpen = true
-                println("Fragment popup opened.")
             }
         }
-
+        //Listener to save converted image files
         binding.textViewAfterSize.setOnClickListener {
+            //Check done to see if files exists and reference is not null.
+            //Then save using methods corresponding to Android Build Version.
             if (cachedConverted != null && cachedConverted?.exists() !!) {
                 val success = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     saveToExternalStorage(cachedConverted !!, cachedConverted?.extension ?: "")
                 else
                     saveToExternalStorage(cachedConverted !!)
-
+                //Toasts whether file was correctly saved.
                 if (success) {
                     Toast.makeText(
                         applicationContext,
                         "File has been saved to Pictures/PNGOptimiser.",
                         Toast.LENGTH_SHORT
                     ).show()
-
+                    //Then delete file and set reference to null.
                     cachedConverted?.delete()
                     cachedConverted = null
                 } else {
@@ -151,9 +165,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
+        //The default settings.
         var compressType = "Original"
-        var quality  = 0
+        var quality  = 80
 
         binding.viewDetectOptionExit.setOnClickListener {
             if (settingsFragIsOpen) {
@@ -171,25 +185,25 @@ class MainActivity : AppCompatActivity() {
                     AppCompatResources.getDrawable(applicationContext, R.drawable.rounded_corner)
                 //Allows fragment to be shown again
                 settingsFragIsOpen = false
-                println("Fragment popup closed.")
 
+                //A check is done to see if the user has changed the compression type or the quality.
                 if (compressType != viewModel.selectedCompression.value || quality != viewModel.selectedQuality.value) {
-                    //A check is done to see if the user has changed the compression type or the quality
+                    //Then we only update the viewModel if it has changed.
                     compressType = viewModel.selectedCompression.value ?: ""
                     quality = viewModel.selectedQuality.value ?: 0
-
+                    //Then we call the manage image method to re-compress to the new settings.
                     managesImage(selectedUri ?: Uri.EMPTY, compressType, quality)
                 }
             }
         }
-
+        //Setup the image display fragments by using a custom adapter
         val fragments = arrayOf(DisplayImagesFragment(), DisplayImagesFragment())
         val adapter = ViewStateAdapter(sfm, fragments, lifecycle)
         binding.viewPager2.adapter = adapter
-
+        //Names of tabs
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Before"))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText("After"))
-
+        //Listener used to respond to user changes on the tabs
         binding.tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 binding.viewPager2.currentItem = tab.position
@@ -207,13 +221,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val getResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        //Receiver for image picker
+        //Receiver for image picker. Returns when the picker is unsuccessful.
         if (it.resultCode != Activity.RESULT_OK) return@registerForActivityResult
         val data: Intent = it.data ?: return@registerForActivityResult
 
         val clipData: ClipData? = data.clipData
 
-        if (clipData != null && clipData.itemCount == 1) {
+        if (clipData != null) {
             val imageUri: Uri = clipData.getItemAt(0).uri
             selectedUri = imageUri
             managesImage(
@@ -221,7 +235,9 @@ class MainActivity : AppCompatActivity() {
                 viewModel.selectedCompression.value ?: "Original",
                 viewModel.selectedQuality.value ?: 0
             )
-        } else {
+        }
+
+        if (clipData == null) {
             //For certain devices, clipData obtained when only 1 object is selected will be null
             val imageUri: Uri? = it.data?.data
             selectedUri = imageUri
@@ -250,7 +266,7 @@ class MainActivity : AppCompatActivity() {
                 R.string.actual_image_size,
                 formatBytes(file.length())
             )
-        //Force slide to go to first tab
+        //Force slide to go to first tab to show uncompressed image
         binding.tabLayout.getTabAt(0)?.select()
 
         val compressionType = when (compressType) {
@@ -359,16 +375,6 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun saveToExternalStorage(file: File, format: String): Boolean {
-        //Check permissions again before saving because user can revoke permissions whilst app is open
-        if (!checkPermissions()) {
-            Toast.makeText(
-                applicationContext,
-                "You have not granted read - write access to your external storage.",
-               Toast.LENGTH_LONG)
-                .show()
-            return false
-        }
-
         val values: ContentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/")
@@ -407,9 +413,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions(): Boolean {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
-        return (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) == PackageManager.PERMISSION_GRANTED
+        val permissionGranted = ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        if (permissionGranted != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this@MainActivity,
+                arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                0)
+        }
+
+        return ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            0 -> if (grantResults.isEmpty()) {
+                Toast.makeText(this@MainActivity, "The app needs WRITE_EXTERNAL_STORAGE to save images.", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
     }
 
     @Throws(IOException::class)

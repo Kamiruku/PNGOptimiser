@@ -55,6 +55,7 @@
         android:layout_centerVertical="true"
         android:layout_marginBottom="100dp"
         android:background="@drawable/rounded_corner"
+        android:text="@string/settings"
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="18sp"
