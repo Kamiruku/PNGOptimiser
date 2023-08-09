@@ -239,15 +239,13 @@ class MainActivity : AppCompatActivity() {
 
         if (clipData == null) {
             //For certain devices, clipData obtained when only 1 object is selected will be null
-            val imageUri: Uri? = it.data?.data
+            val imageUri: Uri = it.data?.data ?: return@registerForActivityResult //But we still want to check if the imageUri obtained is null.
             selectedUri = imageUri
-            if (imageUri != null) {
-                managesImage(
-                    imageUri,
-                    viewModel.selectedCompression.value ?: "Original",
-                    viewModel.selectedQuality.value ?: 0
-                )
-            }
+            managesImage(
+                imageUri,
+                viewModel.selectedCompression.value ?: "Original",
+                viewModel.selectedQuality.value ?: 0
+            )
         }
     }
 
@@ -281,12 +279,14 @@ class MainActivity : AppCompatActivity() {
         var cachedFile: File? = null
 
         val compressJob = lifecycleScope.launch(Dispatchers.IO) {
+            //UI changes on Main Thread
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.VISIBLE
             }
+            //Compress image
             cachedFile = compressionType?.compress(file, quality, applicationContext)
 
-            //Handles pngquant non-png error
+            //Handles pngquant non-png error, we don't want the toast to overlap
             if (cachedFile == file) {
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.INVISIBLE
@@ -343,6 +343,7 @@ class MainActivity : AppCompatActivity() {
             return false
         }
 
+        //Check for picture folder, then make if it not.
         val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
         val rootDir = File(root)
         if (!rootDir.exists()) rootDir.mkdir()
@@ -351,7 +352,7 @@ class MainActivity : AppCompatActivity() {
         if (!storageDir.exists()) storageDir.mkdir()
 
         val dst = File(storageDir, src.name)
-
+        //Then copy file.
         try {
             FileInputStream(src).use { `in` ->
                 FileOutputStream(dst).use { out ->
@@ -413,6 +414,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions(): Boolean {
+        /*
+            Check if WRITE_EXTERNAL_STORAGE permission is granted first.
+            If it is, we return true (because the permission is granted).
+            If not, we first request the permission.
+            Then we do another check, after the permission has been
+            requested to check if the user has granted it.
+         */
         val permissionGranted = ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
         if (permissionGranted != PackageManager.PERMISSION_GRANTED) {
@@ -420,7 +428,7 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity,
                 arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 0)
-        }
+        } else { return true }
 
         return ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
