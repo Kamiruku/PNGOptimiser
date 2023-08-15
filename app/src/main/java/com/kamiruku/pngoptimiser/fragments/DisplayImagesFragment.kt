@@ -21,7 +21,6 @@ class DisplayImagesFragment : Fragment() {
         val binding = FragmentDisplayImagesBinding.inflate(layoutInflater, container, false)
 
         var beforeUpdate = ""
-        var afterUpdate = ""
 
         val bundle = arguments
         bundle?.let {
@@ -41,17 +40,11 @@ class DisplayImagesFragment : Fragment() {
                     val file = File(viewModel.afterPath.value ?: "")
                     val uri = Uri.fromFile(file)
                     binding.fragmentImageViewer.setImage(ImageSource.uri(uri))
-                    afterUpdate = viewModel.afterPath.value ?: ""
                 }
             }
         }
 
 
         return binding.root
-    }
-
-    override fun onResume() {
-
-        super.onResume()
     }
 }

@@ -258,12 +258,13 @@ class MainActivity : AppCompatActivity() {
         val file = getFile(applicationContext, imageUri)
 
         //Sets uncompressed image file path & uncompressed image size
-        viewModel.beforePath.value = imageUri.toString()
+        viewModel.changeBeforePath(imageUri.toString())
         binding.textViewBeforeSize.text =
             getString(
                 R.string.actual_image_size,
                 formatBytes(file.length())
             )
+        binding.textViewAfterSize.text = getString(R.string.compressed_image_size, "")
         //Force slide to go to first tab to show uncompressed image
         binding.tabLayout.getTabAt(0)?.select()
 
@@ -311,6 +312,8 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.Main) {
             //Wait for compress job to finish
             compressJob.join()
+            if ((cachedFile == null) || (cachedFile?.length() == 0L) || (cachedFile == file))
+                viewModel.changeAfterPath("").also { return@launch }
 
             binding.progressBar.visibility = View.INVISIBLE
             //Shows compressed file size
@@ -319,7 +322,7 @@ class MainActivity : AppCompatActivity() {
                     R.string.compressed_image_size,
                     formatBytes(cachedFile?.length() ?: 0L)
                 )
-            viewModel.afterPath.value = cachedFile?.path
+            viewModel.changeAfterPath(cachedFile?.path ?: "")
             //Deletes file stored in root/data/data/com.kamiruku.pngoptimiser/files NOT original file since we no longer need it
             file.delete()
             //CachedFile is not deleted because user can choose to save it
@@ -328,20 +331,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun formatBytes(bytes: Long): String {
-        return android.text.format.Formatter.formatFileSize(applicationContext, bytes)
-    }
+    private fun formatBytes(bytes: Long) = android.text.format.Formatter.formatFileSize(applicationContext, bytes)
 
     private fun saveToExternalStorage(src: File): Boolean {
         //Check permissions again before saving because user can revoke permissions whilst app is open
-        if (!checkPermissions()) {
-            Toast.makeText(
-                applicationContext,
-                "You have not granted read - write access to your external storage.",
-                Toast.LENGTH_LONG)
-                .show()
-            return false
-        }
+        if (!checkPermissions()) return false
 
         //Check for picture folder, then make if it not.
         val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
@@ -439,9 +433,15 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        /*
+            onRequestPermissionsResultCallback - Callback for the result from requesting permissions.
+            This method is invoked for every call on requestPermissions(Activity, String[], int).
+            If the permissions request is interrupted, grantResults will be empty.
+            In this case you will receive empty permissions and results arrays which should be treated as a cancellation.
+         */
 
         when (requestCode) {
-            0 -> if (grantResults.isEmpty()) {
+            0 -> if (grantResults.isEmpty() || grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 Toast.makeText(this@MainActivity, "The app needs WRITE_EXTERNAL_STORAGE to save images.", Toast.LENGTH_LONG).show()
                 return
             }
@@ -503,6 +503,11 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+/**
+ * ViewModel class is used to communicate information between parent Activity (MainActivity)
+ * and children fragments. ViewModel is instantiated in those classes so that they can monitor
+ * these values.
+ */
 class ViewModel: androidx.lifecycle.ViewModel() {
     private val mutableSelectedCompression = MutableLiveData<String>()
     val selectedCompression: LiveData<String> get() = mutableSelectedCompression
@@ -518,6 +523,17 @@ class ViewModel: androidx.lifecycle.ViewModel() {
         mutableSelectedQuality.value = selected
     }
 
-    val beforePath = MutableLiveData<String>()
-    val afterPath = MutableLiveData<String>()
+    private val mutableBeforePath = MutableLiveData<String>()
+    val beforePath: LiveData<String> get() = mutableBeforePath
+
+    fun changeBeforePath(path: String) {
+        mutableBeforePath.value = path
+    }
+
+    private val mutableAfterPath = MutableLiveData<String>()
+    val afterPath: LiveData<String> get() = mutableAfterPath
+
+    fun changeAfterPath(path: String) {
+        mutableAfterPath.value = path
+    }
 }

@@ -4,6 +4,10 @@ import android.view.View
 import android.view.Window
 import android.view.WindowManager
 
+
+/**
+ * ActivityUtils contain UI related functions.
+ */
 class ActivityUtils {
     fun hideDecor(window: Window) {
         try {
