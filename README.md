@@ -1,8 +1,8 @@
 # PNGOptimiser
 
-This app uses [pngquant]([url](https://github.com/kornelski/pngquant)) with Android implementation from [here]([url](https://github.com/ndahlquist/pngquant-android)).
+This app uses [pngquant](https://github.com/kornelski/pngquant) with Android implementation from [here](https://github.com/ndahlquist/pngquant-android).
 
-It also uses [AdvancedLuban]([url](https://github.com/shaohui10086/AdvancedLuban)).
+It also uses [AdvancedLuban](https://github.com/shaohui10086/AdvancedLuban).
 
 ## License
 
