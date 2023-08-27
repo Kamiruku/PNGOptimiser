@@ -56,7 +56,7 @@ class CompressionSelectionFragment : Fragment() {
         //Sets attribute of discrete seekbar - max is amount of luban options - 1
         binding.seekBarQualityDiscrete.apply {
             max = 1
-            progress = binding.seekBarQualityDiscrete.max
+            progress = max
             visibility = View.INVISIBLE
         }
 
@@ -85,7 +85,7 @@ class CompressionSelectionFragment : Fragment() {
                         binding.seekBarQualityDiscrete.visibility = View.VISIBLE
                         binding.seekBarQualityContinuous.visibility = View.INVISIBLE
 
-                        binding.editTextQuality.setText(binding.seekBarQualityDiscrete.progress.toString())
+                        binding.editTextQuality.setText((binding.seekBarQualityDiscrete.progress + 1).toString())
                         binding.textViewPercentage.visibility = View.INVISIBLE
                     }
                     "Original" -> {

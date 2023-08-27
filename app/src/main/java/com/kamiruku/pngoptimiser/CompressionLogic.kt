@@ -21,6 +21,9 @@ interface CompressionLogic {
     suspend fun compress(file: File, quality: Int, context: Context): File?
 }
 
+/**
+ * Copies original file.
+ */
 class OriginalFile: CompressionLogic {
     override suspend fun compress(file: File, quality: Int, context: Context): File {
         val deferred = CompletableDeferred<File>()
@@ -57,6 +60,9 @@ class DefaultPNG: CompressionLogic {
     }
 }
 
+/**
+ * Compression as per pngquant documentation.
+ */
 class PNGQuant: CompressionLogic {
     override suspend fun compress(file: File, quality: Int, context: Context): File {
         if (file.extension != "png") {
@@ -76,6 +82,10 @@ class PNGQuant: CompressionLogic {
     }
 }
 
+
+/**
+ * Compression using AdvancedLuban as per AdvancedLuban documentation.
+ */
 class LubanCompress: CompressionLogic {
     override suspend fun compress(file: File, quality: Int, context: Context): File? {
         val deferred = CompletableDeferred<File?>()

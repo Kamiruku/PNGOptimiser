@@ -506,7 +506,7 @@ class MainActivity : AppCompatActivity() {
 /**
  * ViewModel class is used to communicate information between parent Activity (MainActivity)
  * and children fragments. ViewModel is instantiated in those classes so that they can monitor
- * these values.
+ * or modify these values.
  */
 class ViewModel: androidx.lifecycle.ViewModel() {
     private val mutableSelectedCompression = MutableLiveData<String>()
